@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài viết - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="/css/code-block.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+    <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
+      <i class="ti ti-arrow-left"></i> Quay lại
+    </a>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 20px);">
+    <div class="container" style="max-width: 860px;">
+      <div id="postContent">
+        <div class="skeleton" style="height: 180px; margin-bottom: 16px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Comment Modal -->
+  <div class="modal-overlay" id="commentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Thêm bình luận</h3>
+        <button class="modal-close" onclick="closeCommentModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nội dung bình luận</label>
+          <div class="editor-container">
+            <div class="editor-toolbar">
+              <button type="button" class="toolbar-btn" onclick="execCommand('bold')"><i class="ti ti-bold"></i></button>
+              <button type="button" class="toolbar-btn" onclick="execCommand('italic')"><i class="ti ti-italic"></i></button>
+              <button type="button" class="toolbar-btn" onclick="execCommand('insertUnorderedList')"><i class="ti ti-list"></i></button>
+              <button type="button" class="toolbar-btn" onclick="commentInsertCode()"><i class="ti ti-code"></i></button>
+            </div>
+            <div class="editor-content" id="commentEditor" contenteditable="true" placeholder="Viết bình luận của bạn..."></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCommentModal()">Hủy</button>
+        <button class="btn btn-primary" onclick="submitComment()">Đăng bình luận</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/role-guard.js"></script>
+  <script src="/js/post-renderer.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    let currentPost = null;
+    let currentUserVote = null;
+    let parentCommentId = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!postId) { window.location.href = '/'; return; }
+      await AuthManager.restoreSession();
+      AuthManager.updateUI();
+      RoleGuard.applyVisibility();
+      await loadPost();
+    });
+
+    async function loadPost() {
+      try {
+        const result = await API.posts.getById(postId);
+        if (!result.success) {
+          document.getElementById('postContent').innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-alert-circle"></i>
+              <h3>Không tìm thấy bài viết</h3>
+              <p>Bài viết này có thể đã bị xóa hoặc không tồn tại.</p>
+              <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
+            </div>
+          `;
+          return;
+        }
+        currentPost = result.data;
+        currentUserVote = currentPost.userVote;
+        renderPost(currentPost);
+        await loadComments();
+      } catch (error) { console.error('Lỗi tải bài viết:', error); }
+    }
+
+    function renderPost(post) {
+      document.title = `${post.title} - CyberForum`;
+      document.getElementById('postContent').innerHTML = `
+        <article class="card" style="margin-bottom: 24px;">
+          <div class="d-flex justify-between align-start mb-3">
+            <div>
+              <a href="/category.html?slug=${post.category.slug}" class="category-tag ${post.category.slug}">
+                ${post.category.name}
+              </a>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-ghost btn-sm bookmark-btn ${post.isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark()" style="color: ${post.isBookmarked ? 'var(--accent)' : ''};">
+                <i class="${post.isBookmarked ? 'ti ti-bookmark-filled' : 'ti ti-bookmark'}"></i>
+              </button>
+              ${AuthManager.isAdmin() || AuthManager.isModerator() ? `
+                <button class="btn btn-ghost btn-sm" onclick="togglePin()" title="${post.isPinned ? 'Bỏ ghim' : 'Ghim bài'}">
+                  <i class="ti ti-pinned" style="color: ${post.isPinned ? 'var(--accent)' : ''}"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleLock()" title="${post.isLocked ? 'Mở khóa' : 'Khóa bài'}">
+                  <i class="ti ti-${post.isLocked ? 'lock' : 'lock-open'}"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <h1 style="font-size: 1.5rem; margin-bottom: 12px; line-height: 1.4;">
+            ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 8px; font-size: 0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>' : ''}
+            ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted); margin-right: 6px;" title="Đã khóa"></i>' : ''}
+            ${post.title}
+          </h1>
+
+          <div class="post-meta mb-3">
+            <div class="d-flex align-center gap-2">
+              <a href="/profile.html?username=${post.author.username}" class="d-flex align-center gap-2" style="color: inherit; text-decoration: none;">
+                <div class="avatar avatar-sm">${(post.author.displayName || post.author.username).charAt(0).toUpperCase()}</div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-weight: 500;">${post.author.displayName || post.author.username}</span>
+                    ${AuthManager.renderRoleBadge(post.author.role)}
+                    <span class="rank-badge rank-${post.author.rank.toLowerCase()}">${post.author.rank}</span>
+                  </div>
+                </div>
+              </a>
+              <span class="text-muted">•</span>
+              <span class="text-muted">${formatDate(post.createdAt)}</span>
+            </div>
+          </div>
+
+          <div class="post-body" style="line-height: 1.8; margin-bottom: 16px;">
+            ${post.content}
+          </div>
+
+          ${post.tags && post.tags.length ? `
+            <div class="post-tags mb-3">
+              ${post.tags.map(tag => `<span class="post-tag">${tag}</span>`).join('')}
+            </div>
+          ` : ''}
+
+          <div class="d-flex justify-between align-center" style="border-top: 1px solid var(--border); padding-top: 12px;">
+            <div class="d-flex gap-2">
+              <button class="btn btn-ghost btn-sm vote-btn upvote ${currentUserVote === 1 ? 'upvoted' : ''}" onclick="vote(1)">
+                <i class="ti ti-arrow-up"></i> <span>${post.upvoteCount}</span>
+              </button>
+              <button class="btn btn-ghost btn-sm vote-btn downvote ${currentUserVote === -1 ? 'downvoted' : ''}" onclick="vote(-1)">
+                <i class="ti ti-arrow-down"></i> <span>${post.downvoteCount}</span>
+              </button>
+            </div>
+            <div class="d-flex gap-3 text-muted" style="font-size: 0.8125rem;">
+              <span><i class="ti ti-eye"></i> ${post.viewCount} lượt xem</span>
+              <span><i class="ti ti-message"></i> <span id="commentCount">${post.commentCount}</span> bình luận</span>
+            </div>
+          </div>
+
+          ${post.author && (post.author.id === getCurrentUserId() || AuthManager.isModerator()) ? `
+            <div class="d-flex gap-2 mt-3" style="border-top: 1px solid var(--border); padding-top: 12px;">
+              <a href="/edit-post.html?id=${post.id}" class="btn btn-ghost btn-sm">
+                <i class="ti ti-edit"></i> Sửa
+              </a>
+              <button class="btn btn-ghost btn-sm" onclick="deletePost()" style="color: var(--accent-red);">
+                <i class="ti ti-trash"></i> Xóa
+              </button>
+            </div>
+          ` : ''}
+
+          ${RoleGuard.canPinPost() ? `
+            <div class="mod-toolbar" style="margin-top: 12px; padding: 10px 14px; background: var(--bg-surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px;">Công cụ điều hành</span>
+              <div style="height: 16px; width: 1px; background: var(--border);"></div>
+              <button class="btn btn-ghost btn-sm" onclick="togglePin()" style="color: ${post.isPinned ? 'var(--accent)' : ''};">
+                <i class="ti ti-pinned"></i> ${post.isPinned ? 'Bỏ ghim' : 'Ghim bài'}
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleLock()" style="color: ${post.isLocked ? 'var(--accent-orange)' : ''};">
+                <i class="ti ti-${post.isLocked ? 'lock' : 'lock-open'}"></i> ${post.isLocked ? 'Mở khóa' : 'Khóa bài'}
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="deletePost()" style="color: var(--accent-red);">
+                <i class="ti ti-trash"></i> Xóa bài
+              </button>
+            </div>
+          ` : ''}
+        </article>
+
+        <section>
+          <h2 style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <i class="ti ti-message" style="color: var(--accent);"></i>
+            Bình luận
+          </h2>
+
+          ${AuthManager.isAuthenticated() && !post.isLocked ? `
+            <button class="btn btn-primary mb-4" onclick="openCommentModal()">
+              <i class="ti ti-plus"></i> Thêm bình luận
+            </button>
+          ` : post.isLocked ? `
+            <div class="card mb-4" style="text-align: center; padding: 16px;">
+              <i class="ti ti-lock" style="color: var(--text-muted); font-size: 1.5rem; margin-bottom: 6px;"></i>
+              <p class="text-muted">Bài viết đã bị khóa. Không thể thêm bình luận mới.</p>
+            </div>
+          ` : `
+            <div class="card mb-4" style="text-align: center; padding: 16px;">
+              <p class="text-muted"><a href="/login.html">Đăng nhập</a> để tham gia thảo luận</p>
+            </div>
+          `}
+
+          <div id="commentsList"></div>
+        </section>
+      `;
+
+      PostRenderer.renderAll();
+    }
+
+    async function loadComments(page = 1) {
+      try {
+        const result = await API.comments.getByPost(postId, { page, pageSize: 50 });
+        if (result.success) renderComments(result.data);
+      } catch (error) { console.error('Lỗi tải bình luận:', error); }
+    }
+
+    function renderComments(comments) {
+      const container = document.getElementById('commentsList');
+      if (!comments.length) {
+        container.innerHTML = `<div class="empty-state"><i class="ti ti-message-off"></i><h3>Chưa có bình luận nào</h3><p>Hãy là người đầu tiên chia sẻ ý kiến!</p></div>`;
+        return;
+      }
+      container.innerHTML = comments.map(comment => renderComment(comment)).join('');
+    }
+
+    function renderComment(comment) {
+      return `
+        <div class="card mb-3" id="comment-${comment.id}">
+          <div class="d-flex gap-3">
+            <div class="avatar avatar-sm">${(comment.author.displayName || comment.author.username).charAt(0).toUpperCase()}</div>
+            <div style="flex: 1;">
+              <div class="d-flex justify-between align-start">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-weight: 500;">${comment.author.displayName || comment.author.username}</span>
+                    ${AuthManager.renderRoleBadge(comment.author.role)}
+                    <span class="rank-badge rank-${comment.author.rank.toLowerCase()}" style="margin-left: 4px;">${comment.author.rank}</span>
+                    ${comment.isEdited ? '<span class="text-muted" style="font-size: 0.75rem; margin-left: 6px;">(đã sửa)</span>' : ''}
+                  </div>
+                </div>
+                <span class="text-muted" style="font-size: 0.75rem;">${formatDate(comment.createdAt)}</span>
+              </div>
+              <div class="comment-content mt-2" style="line-height: 1.7; font-size: 0.9375rem;">${comment.content}</div>
+              <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-ghost btn-sm ${comment.userVote === 1 ? 'upvoted' : ''}" onclick="voteComment(${comment.id}, 1)" style="color: var(--text-muted);">
+                  <i class="ti ti-arrow-up"></i> ${comment.upvoteCount}
+                </button>
+                <button class="btn btn-ghost btn-sm ${comment.userVote === -1 ? 'downvoted' : ''}" onclick="voteComment(${comment.id}, -1)" style="color: var(--text-muted);">
+                  <i class="ti ti-arrow-down"></i> ${comment.downvoteCount}
+                </button>
+                ${AuthManager.isAuthenticated() && !currentPost.isLocked ? `
+                  <button class="btn btn-ghost btn-sm" onclick="replyToComment(${comment.id})">
+                    <i class="ti ti-reply"></i> Trả lời
+                  </button>
+                ` : ''}
+                ${comment.author && (comment.author.id === getCurrentUserId() || AuthManager.isModerator()) ? `
+                  <button class="btn btn-ghost btn-sm" onclick="deleteComment(${comment.id})" style="color: var(--accent-red);">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                ` : ''}
+              </div>
+              ${comment.replies && comment.replies.length ? `
+                <div style="margin-left: 20px; margin-top: 12px; border-left: 2px solid var(--border); padding-left: 14px;">
+                  ${comment.replies.map(reply => renderComment(reply)).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function vote(direction) {
+      if (!AuthManager.requireAuth()) return;
+      try {
+        if (currentUserVote === direction) {
+          await API.posts.removeVote(postId);
+          currentUserVote = null;
+        } else {
+          await API.posts.vote(postId, direction === 1);
+          currentUserVote = direction;
+        }
+        document.querySelector('.upvote').classList.toggle('upvoted', currentUserVote === 1);
+        document.querySelector('.downvote').classList.toggle('downvoted', currentUserVote === -1);
+        await loadPost();
+      } catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    async function voteComment(commentId, direction) {
+      if (!AuthManager.requireAuth()) return;
+      try { await API.comments.vote(postId, commentId, direction === 1); await loadComments(); }
+      catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    let bookmarkDebounce = false;
+
+    async function toggleBookmark() {
+      if (!AuthManager.requireAuth()) return;
+      if (bookmarkDebounce) return;
+      bookmarkDebounce = true;
+      setTimeout(() => { bookmarkDebounce = false; }, 300);
+
+      const btn = document.querySelector('.bookmark-btn');
+      const isBookmarked = btn.classList.contains('bookmarked');
+
+      // Optimistic UI update
+      if (isBookmarked) {
+        btn.classList.remove('bookmarked');
+        btn.style.color = '';
+        btn.querySelector('i').className = 'ti ti-bookmark';
+      } else {
+        btn.classList.add('bookmarked');
+        btn.style.color = 'var(--accent)';
+        btn.querySelector('i').className = 'ti ti-bookmark-filled';
+      }
+
+      try {
+        const result = await API.bookmarks.toggle(postId);
+        if (!result.success) {
+          // Revert on failure
+          if (isBookmarked) {
+            btn.classList.add('bookmarked');
+            btn.style.color = 'var(--accent)';
+            btn.querySelector('i').className = 'ti ti-bookmark-filled';
+          } else {
+            btn.classList.remove('bookmarked');
+            btn.style.color = '';
+            btn.querySelector('i').className = 'ti ti-bookmark';
+          }
+          Toast.show(result.message || 'Có lỗi xảy ra', 'error');
+        } else {
+          Toast.show(result.message || (result.data ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết'), 'success');
+        }
+      } catch (error) {
+        // Revert on error
+        if (isBookmarked) {
+          btn.classList.add('bookmarked');
+          btn.style.color = 'var(--accent)';
+          btn.querySelector('i').className = 'ti ti-bookmark-filled';
+        } else {
+          btn.classList.remove('bookmarked');
+          btn.style.color = '';
+          btn.querySelector('i').className = 'ti ti-bookmark';
+        }
+        Toast.show(error.message || 'Có lỗi xảy ra', 'error');
+      }
+    }
+
+    async function togglePin() { try { await API.posts.pin(postId, !currentPost.isPinned); await loadPost(); } catch (error) { Toast.show(error.message, 'error'); } }
+    async function toggleLock() { try { await API.posts.lock(postId, !currentPost.isLocked); await loadPost(); } catch (error) { Toast.show(error.message, 'error'); } }
+
+    async function deletePost() {
+      if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
+      try { await API.posts.delete(postId); Toast.show('Đã xóa bài viết', 'success'); window.location.href = '/'; }
+      catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    async function deleteComment(commentId) {
+      if (!confirm('Bạn có chắc muốn xóa bình luận này?')) return;
+      try { await API.comments.delete(postId, commentId); Toast.show('Đã xóa bình luận', 'success'); await loadComments(); }
+      catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    function openCommentModal(parentId = null) { parentCommentId = parentId; document.getElementById('commentModal').classList.add('active'); document.getElementById('commentEditor').focus(); }
+    function closeCommentModal() { document.getElementById('commentModal').classList.remove('active'); document.getElementById('commentEditor').innerHTML = ''; parentCommentId = null; }
+    function replyToComment(commentId) { openCommentModal(commentId); }
+
+    function execCommand(command) { document.execCommand(command, false, null); document.getElementById('commentEditor').focus(); }
+    function commentInsertCode() {
+      const lang = prompt('Ngôn ngữ:', 'python');
+      if (lang) { document.getElementById('commentEditor').focus(); document.execCommand('insertHTML', false, `<pre><code class="language-${lang}">// code</code></pre>`); }
+    }
+
+    async function submitComment() {
+      const editor = document.getElementById('commentEditor');
+      const content = editor.innerHTML;
+      if (!content || content.length < 1) { Toast.show('Vui lòng nhập bình luận', 'warning'); return; }
+      try {
+        await API.comments.create(postId, { content, parentCommentId });
+        Toast.show('Đã đăng bình luận', 'success');
+        closeCommentModal();
+        await loadComments();
+        document.getElementById('commentCount').textContent = parseInt(document.getElementById('commentCount').textContent) + 1;
+      } catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    function getCurrentUserId() { const user = AuthManager.getUser(); return user ? user.id : null; }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      if (seconds < 60) return 'vài giây trước';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+      return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { PostRenderer.renderAll(); });
+  </script>
+</body>
+</html>

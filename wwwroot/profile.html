@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+    <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
+      <i class="ti ti-arrow-left"></i> Quay lại
+    </a>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 20px);">
+    <div class="container" style="max-width: 900px;">
+
+      <!-- Profile Header -->
+      <div id="profileHeader">
+        <div class="skeleton" style="height: 160px; border-radius: var(--radius-md);"></div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="card" style="padding: 0; margin-top: 20px; overflow: hidden;">
+        <div style="display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;">
+          <button class="profile-tab active" data-tab="posts" style="
+            padding: 12px 20px; background: none; border: none; cursor: pointer;
+            font-size: 0.875rem; font-weight: 500; color: var(--accent);
+            border-bottom: 2px solid var(--accent); white-space: nowrap;">
+            <i class="ti ti-article"></i> Bài viết
+          </button>
+          <button class="profile-tab" data-tab="comments" style="
+            padding: 12px 20px; background: none; border: none; cursor: pointer;
+            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+            border-bottom: 2px solid transparent; white-space: nowrap;">
+            <i class="ti ti-message"></i> Bình luận
+          </button>
+          <button class="profile-tab" data-tab="badges" style="
+            padding: 12px 20px; background: none; border: none; cursor: pointer;
+            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+            border-bottom: 2px solid transparent; white-space: nowrap;">
+            <i class="ti ti-medal"></i> Huy hiệu
+          </button>
+          <button class="profile-tab" data-tab="activity" style="
+            padding: 12px 20px; background: none; border: none; cursor: pointer;
+            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+            border-bottom: 2px solid transparent; white-space: nowrap;">
+            <i class="ti ti-history"></i> Hoạt động gần đây
+          </button>
+        </div>
+
+        <!-- Posts Tab -->
+        <div id="tab-posts" class="profile-tab-content" style="padding: 20px;">
+          <div id="userPosts">
+            <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
+          </div>
+          <div id="postsPagination" class="pagination" style="margin-top: 16px;"></div>
+        </div>
+
+        <!-- Comments Tab -->
+        <div id="tab-comments" class="profile-tab-content" style="padding: 20px; display: none;">
+          <div id="userComments">
+            <div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>
+          </div>
+        </div>
+
+        <!-- Badges Tab -->
+        <div id="tab-badges" class="profile-tab-content" style="padding: 20px; display: none;">
+          <div id="userBadges" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
+            <div class="skeleton" style="height: 100px;"></div>
+            <div class="skeleton" style="height: 100px;"></div>
+          </div>
+        </div>
+
+        <!-- Activity Tab -->
+        <div id="tab-activity" class="profile-tab-content" style="padding: 20px; display: none;">
+          <div id="userActivity">
+            <div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/role-guard.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    const ProfilePage = {
+      username: null,
+      currentPage: 1,
+
+      async init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        this.username = urlParams.get('username');
+
+        if (!this.username) {
+          window.location.href = '/';
+          return;
+        }
+
+        await AuthManager.restoreSession();
+        AuthManager.updateUI();
+        RoleGuard.applyVisibility();
+        this.setupTabs();
+        await this.loadProfile();
+        await this.loadUserPosts(1);
+      },
+
+      setupTabs() {
+        document.querySelectorAll('.profile-tab').forEach(tab => {
+          tab.addEventListener('click', async () => {
+            document.querySelectorAll('.profile-tab').forEach(t => {
+              t.classList.remove('active');
+              t.style.color = 'var(--text-muted)';
+              t.style.borderBottomColor = 'transparent';
+            });
+            tab.classList.add('active');
+            tab.style.color = 'var(--accent)';
+            tab.style.borderBottomColor = 'var(--accent)';
+
+            document.querySelectorAll('.profile-tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`tab-${tab.dataset.tab}`).style.display = 'block';
+
+            if (tab.dataset.tab === 'comments') this.loadUserComments();
+            if (tab.dataset.tab === 'badges') this.loadUserBadges();
+            if (tab.dataset.tab === 'activity') this.loadUserActivity();
+          });
+        });
+      },
+
+      async loadProfile() {
+        try {
+          const result = await API.users.getProfile(this.username);
+          if (!result.success) {
+            document.getElementById('profileHeader').innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-user-off"></i>
+                <h3>Không tìm thấy người dùng</h3>
+                <p>Tài khoản này không tồn tại.</p>
+                <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
+              </div>`;
+            return;
+          }
+
+          const user = result.data;
+          const currentUser = AuthManager.getUser();
+          const isOwnProfile = currentUser?.username === this.username;
+
+          document.getElementById('profileHeader').innerHTML = `
+            <div class="profile-header" style="display: flex; align-items: flex-start; gap: 24px; padding: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
+              <div class="avatar avatar-xl" style="width: 80px; height: 80px; font-size: 2rem; flex-shrink: 0;">
+                ${user.avatarUrl ? `<img src="${user.avatarUrl}" alt="">` : (user.displayName || user.username).charAt(0).toUpperCase()}
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+                  <h1 style="font-size: 1.5rem; margin: 0;">${user.displayName || user.username}</h1>
+                  ${AuthManager.renderRoleBadge(user.role)}
+                  <span class="rank-badge rank-${user.rank.toLowerCase()}" style="font-size: 0.6875rem;">${user.rank}</span>
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 12px;">@${user.username}</div>
+                ${user.bio ? `<p style="color: var(--text-secondary); font-size: 0.9375rem; line-height: 1.6; margin-bottom: 12px;">${user.bio}</p>` : ''}
+
+                <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.reputationPoints}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Điểm</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.postCount}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Bài viết</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.commentCount}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Bình luận</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted);">${this.formatDate(user.createdAt)}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Tham gia</div>
+                  </div>
+                </div>
+
+                ${user.badges && user.badges.length ? `
+                  <div style="margin-top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    ${user.badges.map(b => `
+                      <span class="badge badge-info" style="font-size: 0.6875rem;" title="${b.description || b.name}">
+                        <i class="ti ti-${b.icon || 'award'}" style="font-size: 0.6875rem;"></i> ${b.name}
+                      </span>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+
+              ${isOwnProfile ? `
+                <a href="/settings.html" class="btn btn-secondary btn-sm">
+                  <i class="ti ti-edit"></i> Chỉnh sửa hồ sơ
+                </a>
+              ` : ''}
+            </div>`;
+
+          document.title = `${user.displayName || user.username} - CyberForum`;
+        } catch (e) {
+          document.getElementById('profileHeader').innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-alert-circle"></i>
+              <h3>Lỗi khi tải hồ sơ</h3>
+            </div>`;
+        }
+      },
+
+      async loadUserPosts(page = 1) {
+        this.currentPage = page;
+        const container = document.getElementById('userPosts');
+        container.innerHTML = `
+          <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
+          <div class="skeleton" style="height: 110px;"></div>`;
+
+        try {
+          const result = await API.posts.getAll({ page, pageSize: 10 });
+          const userPosts = (result.data || []).filter(p => p.authorUsername === this.username);
+
+          if (!userPosts.length) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-article-off"></i>
+                <h3>Chưa có bài viết nào</h3>
+                <p>Người dùng này chưa đăng bài viết nào.</p>
+              </div>`;
+            return;
+          }
+
+          container.innerHTML = userPosts.map(post => `
+            <article class="post-card">
+              <div class="post-votes">
+                <button class="vote-btn ${post.userVote === 1 ? 'upvoted' : ''}" onclick="ProfilePage.votePost(${post.id}, true)">
+                  <i class="ti ti-arrow-up"></i>
+                </button>
+                <span class="vote-count ${post.upvoteCount - post.downvoteCount > 0 ? 'positive' : post.upvoteCount - post.downvoteCount < 0 ? 'negative' : ''}">
+                  ${post.upvoteCount - post.downvoteCount}
+                </span>
+                <button class="vote-btn ${post.userVote === -1 ? 'downvoted' : ''}" onclick="ProfilePage.votePost(${post.id}, false)">
+                  <i class="ti ti-arrow-down"></i>
+                </button>
+              </div>
+              <div class="post-content">
+                <div class="d-flex justify-between align-start gap-2">
+                  <a href="/post.html?id=${post.id}" class="post-title" style="text-decoration: none;">
+                    ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 6px; font-size: 0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>' : ''}
+                    ${post.title}
+                  </a>
+                  ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted); flex-shrink: 0;" title="Đã khóa"></i>' : ''}
+                </div>
+                <div class="post-meta">
+                  <span class="post-meta-item"><i class="ti ti-clock"></i> ${this.formatTimeAgo(post.createdAt)}</span>
+                  <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
+                  <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
+                  <a href="/category.html?slug=${post.categorySlug}" class="category-tag ${post.categorySlug}" style="text-decoration: none;">${post.categoryName}</a>
+                </div>
+                ${post.tags && post.tags.length ? `
+                  <div class="post-tags">
+                    ${post.tags.map(tag => `<span class="post-tag">${tag}</span>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </article>
+          `).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải bài viết</h3></div>`;
+        }
+      },
+
+      async loadUserComments() {
+        const container = document.getElementById('userComments');
+        container.innerHTML = `<div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>`;
+
+        try {
+          const result = await API.activity.getMy();
+          if (!result.success || !result.data?.length) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-message-off"></i>
+                <h3>Chưa có bình luận nào</h3>
+                <p>Người dùng này chưa bình luận bài viết nào.</p>
+              </div>`;
+            return;
+          }
+
+          const comments = result.data.filter(a => a.type === 'COMMENT_CREATED');
+          container.innerHTML = comments.map(item => `
+            <div class="card mb-3" style="padding: 14px;">
+              <div style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 6px;">
+                <i class="ti ti-message"></i> Bình luận · ${this.formatTimeAgo(item.createdAt)}
+              </div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">${item.details || 'Nội dung bình luận'}</div>
+            </div>
+          `).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải bình luận</h3></div>`;
+        }
+      },
+
+      async loadUserBadges() {
+        const container = document.getElementById('userBadges');
+        try {
+          const user = AuthManager.getUser();
+          const result = await API.badges.getUserBadges(user?.id);
+          if (!result.success || !result.data?.length) {
+            container.innerHTML = `
+              <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="ti ti-medal"></i>
+                <h3>Chưa có huy hiệu nào</h3>
+                <p>Tích cực tham gia để nhận huy hiệu!</p>
+              </div>`;
+            return;
+          }
+
+          container.innerHTML = result.data.map(badge => `
+            <div class="card" style="text-align: center; padding: 16px;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: ${badge.color}22; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: ${badge.color};">
+                <i class="ti ti-${badge.icon || 'award'}" style="font-size: 1.25rem;"></i>
+              </div>
+              <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 4px;">${badge.name}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${badge.description || ''}</div>
+            </div>
+          `).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải huy hiệu</h3></div>`;
+        }
+      },
+
+      async loadUserActivity() {
+        const container = document.getElementById('userActivity');
+        const user = AuthManager.getUser();
+        if (!user) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-lock"></i><h3>Đăng nhập để xem</h3></div>`;
+          return;
+        }
+        try {
+          const result = await API.security.getMyLogs({ page: 1, pageSize: 10 });
+          if (!result.success || !result.data?.length) {
+            container.innerHTML = `<div class="empty-state"><i class="ti ti-history"></i><h3>Chưa có hoạt động</h3><p>Hoạt động đăng nhập và bảo mật sẽ hiển thị tại đây.</p></div>`;
+            return;
+          }
+          container.innerHTML = result.data.map(log => {
+            const isSuccess = log.isSuccess;
+            const icon = isSuccess ? 'ti-check' : 'ti-x';
+            const color = isSuccess ? 'var(--accent)' : 'var(--accent-red)';
+            const actionMap = {
+              'Login': 'Đăng nhập', 'Logout': 'Đăng xuất', 'FailedLogin': 'Đăng nhập thất bại',
+              'ChangePassword': 'Đổi mật khẩu', 'EditPost': 'Sửa bài viết', 'DeletePost': 'Xóa bài viết',
+              'BanUser': 'Khóa tài khoản', 'UnbanUser': 'Mở khóa tài khoản',
+              'SuspiciousActivity': 'Hoạt động bất thường', 'RoleChange': 'Đổi vai trò'
+            };
+            const label = actionMap[log.action] || log.action;
+            return `
+              <div style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${color}22; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <i class="ti ${icon}" style="color: ${color}; font-size: 1rem;"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 0.875rem; font-weight: 500;">${label}</div>
+                  <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;">${log.description || ''} ${log.ipAddress ? '· ' + log.ipAddress : ''}</div>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">${ProfileManager.formatTimeAgo(log.createdAt)}</div>
+              </div>`;
+          }).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải hoạt động</h3></div>`;
+        }
+      },
+
+      async votePost(postId, isUpvote) {
+        if (!AuthManager.isAuthenticated()) { Toast.show('Vui lòng đăng nhập để bình chọn', 'warning'); return; }
+        try {
+          await API.posts.vote(postId, isUpvote);
+          Toast.show('Đã bình chọn', 'success');
+        } catch (e) {
+          Toast.show(e.message || 'Lỗi khi bình chọn', 'error');
+        }
+      },
+
+      formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        if (seconds < 60) return 'vài giây trước';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+        return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+      },
+
+      formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => ProfilePage.init());
+  </script>
+</body>
+</html>

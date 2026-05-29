@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin nhắn - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="openNewRoomModal()">
+      <i class="ti ti-plus"></i> Tạo cuộc trò chuyện mới
+    </button>
+  </nav>
+
+  <div class="chat-container">
+    <div class="chat-sidebar">
+      <div class="chat-header">
+        <input type="search" class="form-input" placeholder="Tìm kiếm cuộc trò chuyện..." id="searchChats">
+      </div>
+      <div class="chat-list" id="chatList">
+        <div class="skeleton" style="height: 56px; margin: 6px;"></div>
+        <div class="skeleton" style="height: 56px; margin: 6px;"></div>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chatArea" style="flex: 1; display: flex; flex-direction: column;">
+      <div class="empty-state h-100" id="noChatSelected">
+        <i class="ti ti-messages"></i>
+        <h3>Chọn một cuộc trò chuyện</h3>
+        <p>Chọn cuộc trò chuyện từ danh sách hoặc tạo cuộc trò chuyện mới</p>
+      </div>
+
+      <div id="chatView" style="display: none; flex: 1; flex-direction: column;">
+        <div class="d-flex justify-between align-center" style="padding: 12px 16px; border-bottom: 1px solid var(--border);">
+          <div>
+            <h3 id="chatRoomName">Phòng chat</h3>
+            <span class="text-muted" style="font-size: 0.75rem;" id="chatRoomInfo"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="openMembersModal()">
+              <i class="ti ti-users"></i>
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="leaveChat()">
+              <i class="ti ti-logout"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="chat-input-area">
+          <button class="btn btn-ghost" onclick="attachFile()" title="Đính kèm file">
+            <i class="ti ti-paperclip"></i>
+          </button>
+          <input type="text" class="form-input chat-input" id="messageInput" placeholder="Nhập tin nhắn..." onkeypress="handleKeyPress(event)">
+          <button class="btn btn-primary" onclick="sendMessage()">
+            <i class="ti ti-send"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Chat Modal -->
+  <div class="modal-overlay" id="newChatModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Tạo cuộc trò chuyện mới</h3>
+        <button class="modal-close" onclick="closeNewRoomModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Tên phòng</label>
+          <input type="text" class="form-input" id="newRoomName" placeholder="Nhập tên phòng">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô tả (tùy chọn)</label>
+          <textarea class="form-input" id="newRoomDesc" placeholder="Mục đích của cuộc trò chuyện này?" style="min-height: 80px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeNewRoomModal()">Hủy</button>
+        <button class="btn btn-primary" onclick="createRoom()">Tạo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+  <script>
+    let connection = null;
+    let currentRoomId = null;
+    let chatRooms = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!AuthManager.requireAuth()) return;
+      await loadChatRooms();
+      await initSignalR();
+    });
+
+    async function initSignalR() {
+      const token = AuthManager.getToken();
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/chat', { accessTokenFactory: () => token })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Warning)
+        .build();
+
+      connection.on('NewMessage', (message) => { appendMessage(message); scrollToBottom(); });
+      connection.on('MessageEdited', (data) => {
+        const msgEl = document.querySelector(`[data-message-id="${data.MessageId}"]`);
+        if (msgEl) msgEl.querySelector('.chat-message-content').innerHTML = data.NewContent;
+      });
+      connection.on('MessageDeleted', (messageId) => {
+        const msgEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (msgEl) msgEl.querySelector('.chat-message-content').innerHTML = '<em>[Đã xóa]</em>';
+      });
+      connection.on('UserJoined', (user) => { Toast.show(`${user.displayName || user.username} đã tham gia cuộc trò chuyện`, 'info'); });
+      connection.on('UserLeft', (user) => { Toast.show(`${user.username} đã rời cuộc trò chuyện`, 'info'); });
+      connection.on('UserTyping', (user) => { showTypingIndicator(user); });
+      connection.on('Error', (error) => { Toast.show(error, 'error'); });
+
+      try { await connection.start(); console.log('Đã kết nối SignalR'); }
+      catch (error) { console.error('Lỗi kết nối SignalR:', error); Toast.show('Không thể kết nối máy chủ chat', 'error'); }
+    }
+
+    async function loadChatRooms() {
+      try {
+        const result = await API.chat.getRooms({ pageSize: 50 });
+        if (result.success) { chatRooms = result.data; renderChatList(result.data); }
+      } catch (error) { console.error('Lỗi tải danh sách chat:', error); }
+    }
+
+    function renderChatList(rooms) {
+      const container = document.getElementById('chatList');
+      if (!rooms.length) {
+        container.innerHTML = `<div class="empty-state" style="padding: 24px;"><i class="ti ti-message-off"></i><h3>Chưa có cuộc trò chuyện nào</h3><p>Tạo cuộc trò chuyện mới để kết nối với mọi người</p></div>`;
+        return;
+      }
+      container.innerHTML = rooms.map(room => `
+        <div class="chat-room-item ${currentRoomId === room.id ? 'active' : ''}" onclick="selectRoom(${room.id})">
+          <div class="avatar">${room.type === 'Direct' ? (room.members[0]?.username?.charAt(0) || 'C').toUpperCase() : '<i class="ti ti-users"></i>'}</div>
+          <div style="flex: 1; min-width: 0;">
+            <div class="d-flex justify-between">
+              <span class="chat-room-name">${room.name}</span>
+              ${room.unreadCount > 0 ? `<span class="badge badge-info">${room.unreadCount}</span>` : ''}
+            </div>
+            ${room.lastMessage ? `<span class="chat-room-preview">${room.lastMessage.content}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function selectRoom(roomId) {
+      currentRoomId = roomId;
+      const room = chatRooms.find(r => r.id === roomId);
+      if (!room) return;
+      document.getElementById('noChatSelected').style.display = 'none';
+      document.getElementById('chatView').style.display = 'flex';
+      document.getElementById('chatRoomName').textContent = room.name;
+      document.getElementById('chatRoomInfo').textContent = `${room.memberCount} thành viên • ${room.type}`;
+      if (connection) await connection.invoke('JoinRoom', roomId);
+      await loadMessages(roomId);
+      renderChatList(chatRooms);
+    }
+
+    async function loadMessages(roomId) {
+      try {
+        const result = await API.chat.getMessages(roomId, { page: 1, pageSize: 50 });
+        if (result.success) renderMessages(result.data.reverse());
+      } catch (error) { console.error('Lỗi tải tin nhắn:', error); }
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById('chatMessages');
+      const currentUserId = getCurrentUserId();
+      container.innerHTML = messages.map(msg => `
+        <div class="chat-message ${msg.sender.id === currentUserId ? 'own' : ''}" data-message-id="${msg.id}">
+          ${msg.sender.id !== currentUserId ? `<span class="chat-message-sender">${msg.sender.username}</span>` : ''}
+          <div class="chat-message-content">${msg.content}</div>
+          ${msg.attachmentUrl ? `<a href="${msg.attachmentUrl}" target="_blank"><i class="ti ti-paperclip"></i> ${msg.attachmentUrl.split('/').pop()}</a>` : ''}
+          <span class="chat-message-time">${formatTime(msg.createdAt)} ${msg.isEdited ? '(đã sửa)' : ''}</span>
+        </div>
+      `).join('');
+      scrollToBottom();
+    }
+
+    function appendMessage(message) {
+      const container = document.getElementById('chatMessages');
+      const currentUserId = getCurrentUserId();
+      const html = `
+        <div class="chat-message ${message.sender.id === currentUserId ? 'own' : ''}" data-message-id="${message.id}">
+          ${message.sender.id !== currentUserId ? `<span class="chat-message-sender">${message.sender.username}</span>` : ''}
+          <div class="chat-message-content">${message.content}</div>
+          ${message.attachmentUrl ? `<a href="${message.attachmentUrl}" target="_blank"><i class="ti ti-paperclip"></i> File</a>` : ''}
+          <span class="chat-message-time">${formatTime(message.createdAt)}</span>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function scrollToBottom() { const c = document.getElementById('chatMessages'); c.scrollTop = c.scrollHeight; }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const content = input.value.trim();
+      if (!content || !currentRoomId) return;
+      input.value = '';
+      try { if (connection) await connection.invoke('SendMessage', currentRoomId, content); }
+      catch (error) { Toast.show('Không thể gửi tin nhắn', 'error'); input.value = content; }
+    }
+
+    function handleKeyPress(event) {
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }
+    }
+
+    document.getElementById('messageInput')?.addEventListener('input', () => {
+      if (connection) connection.invoke('SendTypingIndicator', currentRoomId);
+    });
+
+    function showTypingIndicator(user) {
+      let indicator = document.getElementById('typingIndicator');
+      if (!indicator) { indicator = document.createElement('div'); indicator.id = 'typingIndicator'; indicator.style.cssText = 'font-size: 0.75rem; color: var(--text-muted); padding: 4px 16px; font-style: italic;'; document.getElementById('chatMessages').appendChild(indicator); }
+      indicator.textContent = `${user.username} đang nhập...`;
+      clearTimeout(window.typingTimeout);
+      window.typingTimeout = setTimeout(() => { indicator.remove(); }, 2000);
+    }
+
+    function openNewRoomModal() { document.getElementById('newChatModal').classList.add('active'); }
+    function closeNewRoomModal() { document.getElementById('newChatModal').classList.remove('active'); document.getElementById('newRoomName').value = ''; document.getElementById('newRoomDesc').value = ''; }
+
+    async function createRoom() {
+      const name = document.getElementById('newRoomName').value.trim();
+      const desc = document.getElementById('newRoomDesc').value.trim();
+      if (!name) { Toast.show('Vui lòng nhập tên phòng', 'warning'); return; }
+      try {
+        const result = await API.chat.createRoom({ name, description: desc });
+        if (result.success) { closeNewRoomModal(); Toast.show('Đã tạo phòng chat', 'success'); await loadChatRooms(); selectRoom(result.data.id); }
+      } catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    async function leaveChat() {
+      if (!currentRoomId) return;
+      if (!confirm('Bạn có chắc muốn rời cuộc trò chuyện này?')) return;
+      try { await API.chat.leaveRoom(currentRoomId); Toast.show('Đã rời cuộc trò chuyện', 'info'); currentRoomId = null; document.getElementById('noChatSelected').style.display = 'flex'; document.getElementById('chatView').style.display = 'none'; await loadChatRooms(); }
+      catch (error) { Toast.show(error.message, 'error'); }
+    }
+
+    function attachFile() {
+      const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,.pdf,.doc,.docx,.txt';
+      input.onchange = (e) => { const file = e.target.files[0]; if (file) { const inp = document.getElementById('messageInput'); inp.value += `[FILE:uploads/${file.name}|${file.type}] `; Toast.show(`Đã chọn file: ${file.name}`, 'info'); } };
+      input.click();
+    }
+
+    function openMembersModal() { Toast.show('Danh sách thành viên sắp ra mắt', 'info'); }
+    function getCurrentUserId() { const user = AuthManager.getUser(); return user ? user.id : null; }
+
+    function formatTime(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now - date;
+      if (diff < 60000) return 'bây giờ';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}p`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}g`;
+      return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' });
+    }
+  </script>
+</body>
+</html>

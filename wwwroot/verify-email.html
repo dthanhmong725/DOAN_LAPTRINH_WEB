@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác thực Email - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+  <div style="width: 100%; max-width: 440px; padding: 24px;">
+    <div class="text-center mb-4">
+      <a href="/" style="font-size: 2rem; color: var(--accent); text-decoration: none;">
+        <i class="ti ti-shield" style="font-size: 2.5rem;"></i>
+      </a>
+      <h1 style="font-size: 1.375rem; margin-top: 12px;">Xác thực Email</h1>
+    </div>
+
+    <div id="loadingView" class="card text-center" style="padding: 40px 24px;">
+      <div style="margin-bottom: 16px;">
+        <span class="loading-spinner" style="display: inline-block; width: 40px; height: 40px; border-width: 3px;"></span>
+      </div>
+      <p class="text-muted" style="font-size: 0.875rem;">Đang xác thực email của bạn...</p>
+    </div>
+
+    <div id="successView" class="card text-center" style="display: none; padding: 40px 24px;">
+      <div style="margin-bottom: 16px;">
+        <i class="ti ti-circle-check" style="font-size: 3rem; color: var(--success);"></i>
+      </div>
+      <h2 style="font-size: 1.125rem; margin-bottom: 12px;">Xác thực thành công!</h2>
+      <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 24px;">
+        Email của bạn đã được xác thực. Bây giờ bạn có thể tham gia đầy đủ các hoạt động trên diễn đàn.
+      </p>
+      <a href="/" class="btn btn-primary w-100">Truy cập diễn đàn</a>
+    </div>
+
+    <div id="errorView" class="card text-center" style="display: none; padding: 40px 24px;">
+      <div style="margin-bottom: 16px;">
+        <i class="ti ti-alert-triangle" style="font-size: 3rem; color: var(--danger);"></i>
+      </div>
+      <h2 style="font-size: 1.125rem; margin-bottom: 12px;" id="errorTitle">Xác thực thất bại</h2>
+      <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 24px;" id="errorMessage">
+        Liên kết xác thực không hợp lệ hoặc đã hết hạn.
+      </p>
+      <a href="/register.html" class="btn btn-primary w-100">Đăng ký lại</a>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+
+      const loadingView = document.getElementById('loadingView');
+      const successView = document.getElementById('successView');
+      const errorView = document.getElementById('errorView');
+
+      if (!token) {
+        loadingView.style.display = 'none';
+        errorView.style.display = 'block';
+        document.getElementById('errorMessage').textContent = 'Không tìm thấy liên kết xác thực.';
+        return;
+      }
+
+      try {
+        const result = await API.auth.verifyEmail(token);
+        if (result.success) {
+          loadingView.style.display = 'none';
+          successView.style.display = 'block';
+        } else {
+          loadingView.style.display = 'none';
+          errorView.style.display = 'block';
+          document.getElementById('errorMessage').textContent = result.message || 'Xác thực thất bại. Liên kết có thể đã hết hạn.';
+        }
+      } catch (error) {
+        loadingView.style.display = 'none';
+        errorView.style.display = 'block';
+        document.getElementById('errorMessage').textContent = 'Có lỗi xảy ra khi xác thực. Vui lòng thử lại sau.';
+      }
+    });
+  </script>
+</body>
+</html>

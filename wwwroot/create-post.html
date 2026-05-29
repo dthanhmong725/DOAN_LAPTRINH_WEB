@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo bài viết - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 24px); padding-bottom: 40px;">
+    <div class="container" style="max-width: 860px;">
+      <h1 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="ti ti-edit" style="color: var(--accent);"></i>
+        Tạo bài viết mới
+      </h1>
+
+      <form id="createPostForm" class="card">
+        <div class="form-group">
+          <label class="form-label">Danh mục</label>
+          <select name="categoryId" class="form-select" required id="categorySelect">
+            <option value="">-- Chọn danh mục --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tiêu đề</label>
+          <input type="text" name="title" class="form-input" placeholder="Nhập tiêu đề bài viết mô tả" required minlength="10" maxlength="200" id="titleInput">
+          <span class="form-hint">10-200 ký tự</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nội dung</label>
+          <div id="editor-wrapper" style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+            <div id="editor" style="min-height: 280px; background: var(--bg-surface2);"></div>
+          </div>
+          <span class="form-hint">Tối thiểu 50 ký tự (sau khi loại thẻ HTML)</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags (tùy chọn)</label>
+          <input type="text" name="tags" class="form-input" placeholder="Nhập tags, cách nhau bởi dấu phẩy (ví dụ: xss, sql-injection, owasp)" id="tagsInput">
+          <span class="form-hint">Tối đa 5 tags, cách nhau bởi dấu phẩy</span>
+        </div>
+
+        <div class="d-flex justify-between align-center mt-4">
+          <a href="/" class="btn btn-secondary">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span class="btn-text"><i class="ti ti-send"></i> Đăng bài</span>
+            <span class="loading-spinner" style="display: none;"></span>
+          </button>
+        </div>
+
+        <div id="errorMessage" class="form-error mt-3" style="display: none;"></div>
+      </form>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    let quillEditor = null;
+
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!AuthManager.requireAuth()) return;
+
+      quillEditor = new Quill('#editor', {
+        theme: 'snow',
+        placeholder: 'Viết nội dung bài viết tại đây...',
+        modules: {
+          toolbar: {
+            container: [
+              ['bold', 'italic', 'underline', 'strike'],
+              ['blockquote', 'code-block'],
+              [{ 'header': 1 }, { 'header': 2 }],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              [{ 'indent': '-1' }, { 'indent': '+1' }],
+              ['link', 'image'],
+              ['clean']
+            ],
+            handlers: {
+              'code-block': function() {
+                const lang = prompt('Chọn ngôn ngữ (python, javascript, bash, sql, cpp, csharp, java, php, yaml, json, xml, powershell, html, css):', 'python');
+                if (!lang) return;
+                const range = quillEditor.getSelection(true);
+                quillEditor.insertText(range.index, '\n');
+                quillEditor.insertEmbed(range.index + 1, 'block', `<pre><code class="language-${lang.trim()}">Nhập code tại đây</code></pre>`);
+                quillEditor.setSelection(range.index + 2, 0);
+              }
+            }
+          }
+        }
+      });
+
+      try {
+        const result = await API.categories.getAll();
+        if (result.success) {
+          const select = document.getElementById('categorySelect');
+          result.data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id;
+            option.textContent = cat.name;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        Toast.show('Không thể tải danh mục', 'error');
+      }
+
+      const form = document.getElementById('createPostForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const errorDiv = document.getElementById('errorMessage');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = quillEditor.root.innerHTML;
+        const plainText = stripHtml(content).trim();
+
+        if (plainText.length < 50) {
+          errorDiv.textContent = 'Nội dung phải có ít nhất 50 ký tự sau khi loại bỏ thẻ HTML';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        const title = document.getElementById('titleInput').value.trim();
+        if (title.length < 10 || title.length > 200) {
+          errorDiv.textContent = 'Tiêu đề phải từ 10 đến 200 ký tự';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        const tagsInput = document.getElementById('tagsInput').value;
+        const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t).slice(0, 5) : [];
+
+        const data = {
+          title: title,
+          content: content,
+          categoryId: parseInt(document.getElementById('categorySelect').value),
+          tags: tags
+        };
+
+        submitBtn.disabled = true;
+        submitBtn.querySelector('.btn-text').innerHTML = '<i class="ti ti-loader ti-spin"></i> Đang đăng...';
+        errorDiv.style.display = 'none';
+
+        try {
+          const result = await API.posts.create(data);
+          if (result.success) {
+            Toast.show('Bài viết đã được đăng thành công!', 'success');
+            window.location.href = `/post.html?id=${result.data.id}`;
+          } else {
+            errorDiv.textContent = result.message || 'Không thể tạo bài viết';
+            errorDiv.style.display = 'block';
+          }
+        } catch (error) {
+          errorDiv.textContent = error.message || 'Có lỗi xảy ra';
+          errorDiv.style.display = 'block';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.querySelector('.btn-text').innerHTML = '<i class="ti ti-send"></i> Đăng bài';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

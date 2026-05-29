@@ -1,0 +1,106 @@
+/* ===== CODE BLOCK ENHANCEMENTS ===== */
+
+/* Language badge — top-left */
+.code-lang-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  letter-spacing: 0.3px;
+  background: rgba(0, 229, 160, 0.15);
+  color: var(--accent);
+  border-radius: var(--radius-sm) 0 var(--radius-sm) 0;
+  z-index: 2;
+  line-height: 1.6;
+  pointer-events: none;
+  text-transform: lowercase;
+}
+
+/* Copy button — top-right */
+.code-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  font-family: 'Be Vietnam Pro', var(--font-sans);
+  background: var(--bg-surface2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  z-index: 3;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.code-copy-btn .copy-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.code-copy-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.code-copy-btn.copied {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0, 229, 160, 0.1);
+  opacity: 1;
+}
+
+/* Show copy button on pre hover */
+pre:hover .code-copy-btn {
+  opacity: 1;
+}
+
+/* Always-visible copy button when already copied */
+pre .code-copy-btn.copied {
+  opacity: 1;
+}
+
+/* Line numbers via highlightjs-line-numbers plugin */
+.hljs-line-numbers {
+  border-right: 1px solid var(--border);
+  padding-right: 12px !important;
+  user-select: none;
+}
+
+/* Better code block padding to avoid overlap with badge/button */
+pre[data-enhanced='true'] {
+  padding-top: 30px !important;
+  position: relative;
+}
+
+/* Scrollable code blocks */
+pre[data-enhanced='true'] code {
+  overflow-x: auto;
+  display: block;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* Mobile: always show copy button */
+@media (max-width: 768px) {
+  .code-copy-btn {
+    opacity: 1;
+  }
+
+  .code-lang-badge {
+    font-size: 0.625rem;
+    padding: 2px 6px;
+  }
+}

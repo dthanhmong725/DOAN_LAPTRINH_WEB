@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng xếp hạng - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 24px);">
+    <div class="container" style="max-width: 720px;">
+      <h1 style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+        <i class="ti ti-trophy" style="color: var(--accent);"></i>
+        Bảng xếp hạng
+      </h1>
+      <p class="text-muted mb-4" style="margin-bottom: 20px;">Những thành viên tích cực nhất cộng đồng dựa trên điểm uy tín.</p>
+
+      <div id="leaderboardList">
+        <div class="skeleton" style="height: 72px; margin-bottom: 8px;"></div>
+        <div class="skeleton" style="height: 72px; margin-bottom: 8px;"></div>
+        <div class="skeleton" style="height: 72px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      AuthManager.updateUI();
+      await loadLeaderboard();
+    });
+
+    async function loadLeaderboard() {
+      try {
+        const result = await API.users.getLeaderboard({ page: 1, pageSize: 50 });
+        renderLeaderboard(result.data);
+      } catch (error) { console.error('Lỗi tải bảng xếp hạng:', error); }
+    }
+
+    function renderLeaderboard(users) {
+      const container = document.getElementById('leaderboardList');
+
+      if (!users.length) {
+        container.innerHTML = `<div class="empty-state"><i class="ti ti-trophy"></i><h3>Chưa có dữ liệu</h3><p>Hãy là người đầu tiên tích lũy điểm uy tín!</p></div>`;
+        return;
+      }
+
+      container.innerHTML = users.map((entry) => `
+        <div class="card mb-2 d-flex align-center gap-3" style="padding: 14px 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: ${getRankBg(entry.rank)}; display: flex; align-items: center; justify-content: center; font-weight: 700; color: ${getRankColor(entry.rank)}; flex-shrink: 0;">
+            ${entry.rank <= 3 ? `<i class="ti ti-trophy"></i>` : entry.rank}
+          </div>
+          <div class="avatar">${(entry.user.displayName || entry.user.username).charAt(0).toUpperCase()}</div>
+          <div style="flex: 1; min-width: 0;">
+            <a href="/profile.html?username=${entry.user.username}" style="font-weight: 600; color: var(--text-primary); text-decoration: none; font-size: 0.9375rem;">
+              ${entry.user.displayName || entry.user.username}
+            </a>
+            <div class="d-flex gap-2 mt-1" style="gap: 6px; margin-top: 2px;">
+              <span class="rank-badge rank-${entry.user.rank.toLowerCase()}">${entry.user.rank}</span>
+              <span class="text-muted" style="font-size: 0.75rem;">
+                <i class="ti ti-file-text"></i> ${entry.postCount} bài
+              </span>
+            </div>
+          </div>
+          <div style="text-align: right; flex-shrink: 0;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${entry.reputationPoints}</div>
+            <div class="text-muted" style="font-size: 0.6875rem;">điểm</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getRankColor(rank) {
+      if (rank === 1) return '#FFD700';
+      if (rank === 2) return '#C0C0C0';
+      if (rank === 3) return '#CD7F32';
+      return 'var(--text-muted)';
+    }
+
+    function getRankBg(rank) {
+      if (rank === 1) return 'rgba(255,215,0,0.12)';
+      if (rank === 2) return 'rgba(192,192,192,0.12)';
+      if (rank === 3) return 'rgba(205,127,50,0.12)';
+      return 'var(--bg-surface2)';
+    }
+  </script>
+</body>
+</html>

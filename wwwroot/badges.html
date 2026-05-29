@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Huy hiệu - CyberForum</title>
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="ti ti-shield"></i> CyberForum
+    </a>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 24px);">
+    <div class="container">
+      <h1 style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+        <i class="ti ti-medal" style="color: var(--accent);"></i>
+        Huy hiệu
+      </h1>
+      <p class="text-muted mb-4" style="margin-bottom: 20px;">Kiếm huy hiệu bằng cách tham gia cộng đồng. Huy hiệu được trao tự động dựa trên hoạt động của bạn.</p>
+
+      <div id="badgesGrid" class="d-flex" style="gap: 16px; flex-wrap: wrap;">
+        <div class="skeleton" style="width: 180px; height: 140px;"></div>
+        <div class="skeleton" style="width: 180px; height: 140px;"></div>
+        <div class="skeleton" style="width: 180px; height: 140px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      AuthManager.updateUI();
+      await loadBadges();
+    });
+
+    async function loadBadges() {
+      try {
+        const result = await API.badges.getAll();
+        renderBadges(result.data);
+      } catch (error) { console.error('Lỗi tải huy hiệu:', error); }
+    }
+
+    function renderBadges(badges) {
+      const container = document.getElementById('badgesGrid');
+      container.innerHTML = badges.map(badge => `
+        <div class="card" style="width: 180px; text-align: center; ${!badge.isEarned ? 'opacity: 0.45;' : ''}">
+          <div style="width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 50%; background: ${badge.color}18; display: flex; align-items: center; justify-content: center;">
+            <i class="ti ti-${getBadgeIcon(badge.icon)}" style="font-size: 1.5rem; color: ${badge.color};"></i>
+          </div>
+          <h3 style="font-size: 0.875rem; margin-bottom: 4px;">${badge.name}</h3>
+          <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">${badge.description || 'Không có mô tả'}</p>
+          ${badge.isEarned ? `
+            <div class="badge badge-success mt-2">
+              <i class="ti ti-check"></i> Đã đạt được
+              ${badge.earnedAt ? `<span style="margin-left: 4px;">${formatDate(badge.earnedAt)}</span>` : ''}
+            </div>
+          ` : `
+            <div class="badge mt-2" style="background: var(--bg-surface2); color: var(--text-muted);">
+              <i class="ti ti-lock"></i> Chưa có
+            </div>
+          `}
+        </div>
+      `).join('');
+    }
+
+    function getBadgeIcon(icon) {
+      const icons = { 'file-text': 'file-text', 'star': 'star', 'award': 'award', 'shield': 'shield', 'thumbs-up': 'thumb-up', 'heart': 'heart', 'crown': 'crown', 'bookmark': 'bookmark', 'moon': 'moon', 'trophy': 'trophy' };
+      return icons[icon] || 'medal';
+    }
+
+    function formatDate(dateString) {
+      return new Date(dateString).toLocaleDateString('vi-VN');
+    }
+  </script>
+</body>
+</html>
