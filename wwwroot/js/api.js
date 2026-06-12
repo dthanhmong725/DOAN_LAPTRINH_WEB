@@ -56,7 +56,21 @@ class ApiClient {
             AuthManager.logout();
           }
         }
-        throw new Error(data.message || `Lỗi ${response.status}: Yêu cầu thất bại`);
+        
+        let errorMessage = data.message;
+        if (!errorMessage && data.errors) {
+            // ASP.NET Core ValidationProblemDetails format
+            if (typeof data.errors === 'object' && !Array.isArray(data.errors)) {
+                errorMessage = Object.values(data.errors).flat().join('; ');
+            } else if (Array.isArray(data.errors)) {
+                errorMessage = data.errors.join('; ');
+            }
+        }
+        if (!errorMessage && data.title) {
+            errorMessage = data.title;
+        }
+
+        throw new Error(errorMessage || `Lỗi ${response.status}: Yêu cầu thất bại`);
       }
 
       return data;
@@ -217,6 +231,13 @@ const API = {
 
   security: {
     getMyLogs: (params) => api.get('/security/logs/mine', params)
+  },
+
+  notifications: {
+    getAll: (params) => api.get('/notifications', params),
+    getUnreadCount: () => api.get('/notifications/count'),
+    markAsRead: (id) => api.put(`/notifications/${id}/read`),
+    markAllAsRead: () => api.put('/notifications/read-all')
   }
 };
 

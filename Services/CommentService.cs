@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using Ganss.Xss;
 using DOAN_LAPTRINHWEB.Data;
 using DOAN_LAPTRINHWEB.Interfaces;
@@ -13,13 +14,15 @@ public class CommentService : ICommentService
     private readonly IActivityLogService _activityLog;
     private readonly IBadgeService _badgeService;
     private readonly IHtmlSanitizer _htmlSanitizer;
+    private readonly INotificationService _notificationService;
 
-    public CommentService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService)
+    public CommentService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService, INotificationService notificationService)
     {
         _context = context;
         _activityLog = activityLog;
         _badgeService = badgeService;
         _htmlSanitizer = new HtmlSanitizer();
+        _notificationService = notificationService;
     }
 
     public async Task<PaginatedResponse<CommentDto>> GetByPostAsync(int postId, int page, int pageSize, int? userId)
@@ -88,6 +91,32 @@ public class CommentService : ICommentService
 
         await _activityLog.LogAsync(ActivityType.CommentCreate, authorId, null, null, $"Comment on post: {post.Title}");
         await _badgeService.CheckAndAwardBadgesAsync(authorId);
+
+        // Notify parent comment author if it's a reply
+        if (dto.ParentCommentId.HasValue)
+        {
+            var parent = await _context.Comments.FindAsync(dto.ParentCommentId.Value);
+            if (parent != null && parent.AuthorId != authorId)
+            {
+                await _notificationService.CreateAsync(parent.AuthorId, authorId, NotificationType.Comment, postId, comment.Id);
+            }
+        }
+        else if (authorId != post.AuthorId) // Notify post author if it's a direct comment
+        {
+            await _notificationService.CreateAsync(post.AuthorId, authorId, NotificationType.Comment, postId, comment.Id);
+        }
+
+        // Handle Mentions
+        var mentionMatches = Regex.Matches(dto.Content, @"@([a-zA-Z0-9_]+)");
+        foreach (Match match in mentionMatches)
+        {
+            var username = match.Groups[1].Value;
+            var mentionedUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (mentionedUser != null && mentionedUser.Id != authorId)
+            {
+                await _notificationService.CreateAsync(mentionedUser.Id, authorId, NotificationType.Mention, postId, comment.Id);
+            }
+        }
 
         comment.Author = author;
 
@@ -173,6 +202,11 @@ public class CommentService : ICommentService
                     comment.UpvoteCount++;
                 }
                 existingVote.IsUpvote = isUpvote;
+                
+                if (userId != comment.AuthorId)
+                {
+                    await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
+                }
             }
         }
         else
@@ -188,6 +222,11 @@ public class CommentService : ICommentService
                 comment.UpvoteCount++;
             else
                 comment.DownvoteCount++;
+                
+            if (userId != comment.AuthorId)
+            {
+                await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
+            }
         }
 
         await _context.SaveChangesAsync();

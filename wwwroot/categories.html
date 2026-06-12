@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tất cả danh mục - CyberForum</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/themes/cyber.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 </head>
@@ -15,9 +16,33 @@
     <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
       <i class="ti ti-arrow-left"></i> Quay lại
     </a>
-    <button id="createCatBtn" class="btn btn-ghost btn-sm requires-admin" style="display: none; margin-left: auto;" onclick="openCreateModal()">
-      <i class="ti ti-plus"></i> Tạo danh mục
-    </button>
+    <div class="navbar-right" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+      <button id="createCatBtn" class="btn btn-ghost btn-sm requires-admin" style="display: none;" onclick="openCreateModal()">
+        <i class="ti ti-plus"></i> Tạo danh mục
+      </button>
+      <!-- Khi đã đăng nhập -->
+      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+          <i class="ti ti-bell"></i>
+        </button>
+        <div style="position: relative;">
+          <button class="btn btn-ghost btn-user" id="userMenuBtn">
+            <div class="avatar avatar-sm user-avatar">U</div>
+            <span class="user-name">Người dùng</span>
+            <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
+          </button>
+          <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
+            <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-user"></i> Hồ sơ
+            </a>
+            <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
+            <a href="#" id="logoutBtn" class="nav-item" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-logout"></i> Đăng xuất
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <main style="padding-top: calc(var(--navbar-height) + 20px);">
@@ -90,6 +115,7 @@
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/role-guard.js"></script>
+  <script src="/js/notification-bell.js"></script>
   <script>
     async function init() {
       await AuthManager.restoreSession();
@@ -204,5 +230,7 @@
 
     document.addEventListener('DOMContentLoaded', init);
   </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

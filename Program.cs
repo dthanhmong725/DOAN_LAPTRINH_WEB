@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using DOAN_LAPTRINHWEB.Data;
@@ -91,6 +92,70 @@ builder.Services.AddScoped<IPasswordStrengthService, PasswordStrengthService>();
 builder.Services.AddScoped<ISecurityLogService, SecurityLogService>();
 builder.Services.AddScoped<IRateLimitService, RateLimitService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUploadService, UploadService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// File upload size limit (20MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 20 * 1024 * 1024;
+});
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 20 * 1024 * 1024;
+});
+
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "CyberForum API",
+        Version = "v1",
+        Description = "API cho hệ thống diễn đàn CyberForum - bao gồm xác thực, bài viết, bình luận, chat và upload tài liệu.",
+        Contact = new OpenApiContact
+        {
+            Name = "CyberForum Team",
+            Email = "admin@cyberforum.local"
+        }
+    });
+
+    // JWT Bearer auth trong Swagger UI
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập JWT token. Ví dụ: Bearer {token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Cookie auth
+    options.AddSecurityDefinition("CookieAuth", new OpenApiSecurityScheme
+    {
+        Name = "access_token",
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Cookie,
+        Description = "JWT token lưu trong cookie 'access_token'"
+    });
+});
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -146,6 +211,15 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "CyberForum API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "CyberForum API Documentation";
+        options.DefaultModelsExpandDepth(-1);
+        options.DisplayRequestDuration();
+    });
 }
 else
 {

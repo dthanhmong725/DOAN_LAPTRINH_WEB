@@ -102,6 +102,7 @@ public class UserDto
     public string Email { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
+    public string? CoverPhotoUrl { get; set; }
     public string? Bio { get; set; }
     public string Role { get; set; } = "User";
     public string Rank { get; set; } = "Newbie";
@@ -115,6 +116,7 @@ public class PublicProfileDto
     public string Username { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
+    public string? CoverPhotoUrl { get; set; }
     public string? Bio { get; set; }
     public string Role { get; set; } = "User";
     public string Rank { get; set; } = "Newbie";
@@ -135,6 +137,9 @@ public class UpdateProfileDto
 
     [Url]
     public string? AvatarUrl { get; set; }
+
+    [Url]
+    public string? CoverPhotoUrl { get; set; }
 }
 
 // ===== Admin DTOs =====

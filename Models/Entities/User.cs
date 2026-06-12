@@ -54,6 +54,9 @@ public class User
     [StringLength(500)]
     public string? AvatarUrl { get; set; }
 
+    [StringLength(500)]
+    public string? CoverPhotoUrl { get; set; }
+
     [StringLength(1000)]
     public string? Bio { get; set; }
 

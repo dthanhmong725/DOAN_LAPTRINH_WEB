@@ -108,7 +108,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Color = "#6c757d",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9795),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3574),
                             Description = "Created your first post",
                             Icon = "file-text",
                             Name = "First Post",
@@ -119,7 +119,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 2,
                             Color = "#ffc107",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9800),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3580),
                             Description = "Made 10 posts",
                             Icon = "star",
                             Name = "Active Member",
@@ -130,7 +130,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 3,
                             Color = "#17a2b8",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9802),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3582),
                             Description = "Made 50 posts",
                             Icon = "award",
                             Name = "Contributor",
@@ -141,7 +141,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 4,
                             Color = "#28a745",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9803),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3584),
                             Description = "Made 100 posts",
                             Icon = "shield",
                             Name = "Veteran",
@@ -152,7 +152,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 5,
                             Color = "#fd7e14",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9804),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3585),
                             Description = "Received 10 upvotes",
                             Icon = "thumbs-up",
                             Name = "Helpful",
@@ -163,7 +163,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 6,
                             Color = "#dc3545",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9805),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3587),
                             Description = "Received 50 upvotes",
                             Icon = "heart",
                             Name = "Popular",
@@ -174,7 +174,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 7,
                             Color = "#6f42c1",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9806),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3588),
                             Description = "Received 100 upvotes",
                             Icon = "crown",
                             Name = "Legendary",
@@ -185,7 +185,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 8,
                             Color = "#20c997",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9808),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3590),
                             Description = "Bookmarked 10 posts",
                             Icon = "bookmark",
                             Name = "Bookworm",
@@ -196,7 +196,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 9,
                             Color = "#0dcaf0",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9809),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3591),
                             Description = "Posted between midnight and 5 AM",
                             Icon = "moon",
                             Name = "Night Owl",
@@ -207,7 +207,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 10,
                             Color = "#ffc107",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9810),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3593),
                             Description = "Reached 100 reputation points",
                             Icon = "trophy",
                             Name = "Century Club",
@@ -301,7 +301,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Color = "#f85149",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9621),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3275),
                             CreatedById = 1,
                             Description = "Thảo luận về phương pháp, công cụ và kỹ thuật kiểm thử xâm nhập. Chia sẻ kinh nghiệm từ các bài lab thực tế.",
                             DisplayOrder = 1,
@@ -315,7 +315,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 2,
                             Color = "#f0883e",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9627),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3283),
                             CreatedById = 1,
                             Description = "Phân tích malware tĩnh và động, reverse engineering, nghiên cứu virus và các mối đe dọa mới.",
                             DisplayOrder = 2,
@@ -329,7 +329,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 3,
                             Color = "#388bfd",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9630),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3286),
                             CreatedById = 1,
                             Description = "OWASP Top 10, XSS, SQLi, CSRF, LFI/RFI và bảo mật ứng dụng web. Các bài lab và writeup CTF.",
                             DisplayOrder = 3,
@@ -343,7 +343,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 4,
                             Color = "#2ecc71",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9631),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3289),
                             CreatedById = 1,
                             Description = "Tường lửa, IDS/IPS, giám sát mạng, giao thức và phân tích lưu lượng. Công cụ Wireshark, Snort.",
                             DisplayOrder = 4,
@@ -357,7 +357,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 5,
                             Color = "#bc8cff",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9632),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3290),
                             CreatedById = 1,
                             Description = "Mã hóa, hash, PKI, chữ ký số và các giao thức mật mã. Bài toán và thách thức crypto.",
                             DisplayOrder = 5,
@@ -371,7 +371,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 6,
                             Color = "#00e5a0",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9634),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3292),
                             CreatedById = 1,
                             Description = "Trung tâm điều hành bảo mật, phát hiện và ứng phó sự cố, threat hunting và DFIR.",
                             DisplayOrder = 6,
@@ -385,7 +385,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 7,
                             Color = "#f39c12",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9635),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3294),
                             CreatedById = 1,
                             Description = "Disassembler, decompiler, phân tích binary, unpacking và patching. Công cụ IDA, Ghidra, x64dbg.",
                             DisplayOrder = 7,
@@ -608,6 +608,48 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         .IsUnique();
 
                     b.ToTable("CommentVotes");
+                });
+
+            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ActorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CommentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecipientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("CommentId");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("RecipientId", "IsRead");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.Post", b =>
@@ -918,6 +960,10 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("CoverPhotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1002,18 +1048,18 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9836),
+                            CreatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3628),
                             DisplayName = "Administrator",
                             Email = "admin@cyberforum.local",
                             FailedLoginAttempts = 0,
                             IsActive = true,
                             IsBanned = false,
                             IsEmailVerified = true,
-                            PasswordHash = "$2a$11$2bSeV9DI9HymSjC9yd7yoOFt16tLJbfngIIkjcNev3YPeM.0gE5w2",
+                            PasswordHash = "$2a$11$5EdPaFMvj9zhrfSZiA94pO1aYfo8bYpwFF3geBJgfEoiypbJmBKbW",
                             Rank = 5,
                             ReputationPoints = 9999,
                             Role = 2,
-                            UpdatedAt = new DateTime(2026, 5, 30, 1, 47, 36, 705, DateTimeKind.Utc).AddTicks(9837),
+                            UpdatedAt = new DateTime(2026, 6, 12, 7, 33, 11, 694, DateTimeKind.Utc).AddTicks(3629),
                             Username = "admin"
                         });
                 });
@@ -1043,6 +1089,61 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         .IsUnique();
 
                     b.ToTable("UserBadges");
+                });
+
+            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.UserUpload", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserUploads");
                 });
 
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ActivityLog", b =>
@@ -1186,6 +1287,38 @@ namespace DOAN_LAPTRINHWEB.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.Comment", "Comment")
+                        .WithMany()
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Recipient");
+                });
+
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.Post", b =>
                 {
                     b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "Author")
@@ -1290,6 +1423,24 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         .IsRequired();
 
                     b.Navigation("Badge");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.UserUpload", b =>
+                {
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
 
                     b.Navigation("User");
                 });

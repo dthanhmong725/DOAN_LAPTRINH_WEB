@@ -27,6 +27,8 @@ public class AppDbContext : DbContext
     public DbSet<ChatRoom> ChatRooms => Set<ChatRoom>();
     public DbSet<ChatRoomMember> ChatRoomMembers => Set<ChatRoomMember>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<UserUpload> UserUploads => Set<UserUpload>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -213,6 +215,55 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(cm => cm.ReplyToId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // UserUpload -> User
+        modelBuilder.Entity<UserUpload>()
+            .HasOne(u => u.User)
+            .WithMany()
+            .HasForeignKey(u => u.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Notification -> Recipient (User)
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Recipient)
+            .WithMany()
+            .HasForeignKey(n => n.RecipientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Notification -> Actor (User, optional)
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Actor)
+            .WithMany()
+            .HasForeignKey(n => n.ActorId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Notification -> Post (optional)
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Post)
+            .WithMany()
+            .HasForeignKey(n => n.PostId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Notification -> Comment (optional)
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Comment)
+            .WithMany()
+            .HasForeignKey(n => n.CommentId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Index for fast unread count queries
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.RecipientId, n.IsRead });
+
+        // UserUpload -> Post (optional)
+        modelBuilder.Entity<UserUpload>()
+            .HasOne(u => u.Post)
+            .WithMany()
+            .HasForeignKey(u => u.PostId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<UserUpload>()
+            .HasIndex(u => u.UserId);
 
         // Seed default categories
         modelBuilder.Entity<Category>().HasData(

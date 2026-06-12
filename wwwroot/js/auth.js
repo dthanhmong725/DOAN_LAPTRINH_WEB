@@ -83,6 +83,8 @@ class AuthManager {
     await this._persistSession();
     this.updateUI();
     await NotificationManager.requestPermission();
+    // Khởi tạo notification bell sau khi đăng nhập
+    if (typeof NotificationBell !== 'undefined') NotificationBell.init();
   }
 
   static async logout() {
@@ -91,6 +93,8 @@ class AuthManager {
         await API.auth.logout();
       } catch (e) {}
     }
+    // Hủy notification bell trước khi logout
+    if (typeof NotificationBell !== 'undefined') NotificationBell.destroy();
     this._clearSession();
     this._clearRefreshTimer();
     api.setToken(null);
@@ -177,6 +181,11 @@ class AuthManager {
         api.setToken(token);
         this._scheduleRefresh();
         this.updateUI();
+        // Khởi tạo notification bell SAU updateUI (nút chuông đã hiển thị)
+        if (typeof NotificationBell !== 'undefined') {
+          NotificationBell._initialized = false;
+          NotificationBell.init();
+        }
         return true;
       }
 
@@ -185,6 +194,10 @@ class AuthManager {
         const refreshed = await this.silentRefresh();
         if (refreshed) {
           this.updateUI();
+          if (typeof NotificationBell !== 'undefined') {
+            NotificationBell._initialized = false;
+            NotificationBell.init();
+          }
           return true;
         }
       }

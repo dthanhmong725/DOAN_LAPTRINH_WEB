@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CyberForum - Diễn đàn An ninh mạng</title>
   <meta name="description" content="Diễn đàn cộng đồng an ninh mạng Việt Nam - Chia sẻ kiến thức về Pentest, Malware, Web Security, Network, Crypto, SOC, Reverse Engineering">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/themes/cyber.css">
   <link rel="stylesheet" href="/css/code-block.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -32,13 +33,17 @@
       </div>
 
       <!-- Khi đã đăng nhập -->
-      <div class="user-menu hidden" style="display: none; align-items: center; gap: 8px;">
+      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
         <a href="/create-post.html" class="btn btn-primary btn-nav requires-auth">
           <i class="ti ti-plus"></i> Bài mới
         </a>
 
-        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo">
+        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
           <i class="ti ti-bell"></i>
+        </button>
+
+        <button class="btn btn-ghost btn-icon" onclick="AuthManager.logout()" title="Đăng xuất" style="color: var(--accent-red);">
+          <i class="ti ti-logout"></i>
         </button>
 
         <div style="position: relative;">
@@ -49,8 +54,11 @@
           </button>
 
           <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
-            <a href="/profile.html" class="nav-item" style="padding: 8px 12px;">
+            <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-user"></i> Hồ sơ
+            </a>
+            <a href="/upload.html" class="nav-item requires-auth" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-upload"></i> Upload tài liệu
             </a>
             <a href="/bookmarks.html" class="nav-item requires-auth" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-bookmark"></i> Đã lưu
@@ -101,17 +109,21 @@
 
       <div class="nav-section requires-auth" style="display: none;">
         <div class="nav-section-title">Truy cập nhanh</div>
-        <a href="/my-posts.html" class="nav-item requires-auth" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px;">
-          <i class="ti ti-file-text"></i>
-          <span>Bài viết của tôi</span>
+        <a href="/profile.html" class="nav-item requires-auth" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px;">
+          <i class="ti ti-user"></i>
+          <span>Hồ sơ cá nhân</span>
         </a>
-        <a href="/activity.html" class="nav-item requires-auth" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px;">
-          <i class="ti ti-history"></i>
-          <span>Nhật ký hoạt động</span>
+        <a href="/upload.html" class="nav-item requires-auth" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px;">
+          <i class="ti ti-upload"></i>
+          <span>Quản lý upload</span>
         </a>
         <a href="/chat.html" class="nav-item requires-auth" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px;">
           <i class="ti ti-messages"></i>
           <span>Tin nhắn</span>
+        </a>
+        <a href="#" class="nav-item requires-auth" onclick="AuthManager.logout()" style="display: flex; align-items: center; gap: 8px; padding: 9px 16px; color: var(--accent-red); margin-top: 8px; border-top: 1px solid var(--border);">
+          <i class="ti ti-logout"></i>
+          <span>Đăng xuất</span>
         </a>
       </div>
 
@@ -201,12 +213,18 @@
   <script src="/js/password-strength.js"></script>
   <script src="/js/role-guard.js"></script>
   <script src="/js/post-renderer.js"></script>
+  <script src="/js/notification-bell.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       await AuthManager.restoreSession();
       AuthManager.updateUI();
+      // Đảm bảo notification bell được init đúng sau updateUI
+      if (typeof NotificationBell !== 'undefined' && AuthManager.isAuthenticated()) {
+        NotificationBell._initialized = false;
+        NotificationBell.init();
+      }
       await loadCategories();
       await loadPosts();
       setupEventListeners();
@@ -483,5 +501,7 @@
       PostRenderer.renderAll();
     });
   </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

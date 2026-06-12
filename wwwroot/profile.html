@@ -4,11 +4,144 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hồ sơ - CyberForum</title>
+  <meta name="description" content="Xem và chỉnh sửa hồ sơ cá nhân, bài viết đã đăng và tài liệu upload trên CyberForum.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/themes/cyber.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <style>
+    /* Cover photo */
+    .profile-cover {
+      position: relative;
+      height: 200px;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 40%, #1a2332 100%);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .profile-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cover-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .profile-cover:hover .cover-overlay { background: rgba(0,0,0,0.45); }
+    .cover-overlay-btn {
+      opacity: 0; display: flex; align-items: center; gap: 8px;
+      background: rgba(0,0,0,0.7); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 8px 16px;
+      font-size: 0.875rem; cursor: pointer; transition: opacity 0.2s;
+    }
+    .profile-cover:hover .cover-overlay-btn { opacity: 1; }
+
+    /* Avatar ring */
+    .avatar-upload-wrap {
+      position: absolute;
+      bottom: -40px; left: 28px;
+      width: 88px; height: 88px;
+    }
+    .avatar-upload-wrap .avatar-xl {
+      width: 88px; height: 88px; font-size: 2.2rem;
+      border: 3px solid var(--bg-base); border-radius: 50%;
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .avatar-upload-wrap .avatar-xl img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-edit-badge {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.6); color: #fff;
+      font-size: 0.65rem; text-align: center; padding: 4px 0;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .avatar-upload-wrap:hover .avatar-edit-badge { opacity: 1; }
+
+    /* Profile card */
+    .profile-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px;
+    }
+    .profile-body {
+      padding: 56px 28px 24px;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Stat chips */
+    .stat-chip {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 64px;
+    }
+    .stat-chip .stat-val {
+      font-size: 1.2rem; font-weight: 700; color: var(--accent);
+      line-height: 1;
+    }
+    .stat-chip .stat-lbl {
+      font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* Edit form */
+    .edit-form-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 500;
+      align-items: center; justify-content: center;
+    }
+    .edit-form-overlay.open { display: flex; }
+    .edit-modal {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 28px;
+      width: 100%; max-width: 460px; position: relative;
+    }
+
+    /* Tabs */
+    .profile-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .profile-tab-btn {
+      padding: 12px 20px; background: none; border: none; cursor: pointer;
+      font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+      border-bottom: 2px solid transparent; white-space: nowrap;
+      display: flex; align-items: center; gap: 6px; transition: color 0.15s;
+    }
+    .profile-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .profile-tab-content { padding: 20px; display: none; }
+    .profile-tab-content.active { display: block; }
+
+    /* File card */
+    .file-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 14px; background: var(--bg-elevated);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      transition: border-color 0.15s;
+    }
+    .file-card:hover { border-color: var(--accent-dim); }
+    .file-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .file-icon.img  { background: #388bfd22; color: #388bfd; }
+    .file-icon.pdf  { background: #f8514922; color: #f85149; }
+    .file-icon.code { background: #bc8cff22; color: #bc8cff; }
+    .file-icon.log  { background: #f0883e22; color: #f0883e; }
+
+    /* Password strength bar */
+    .strength-bar { height: 4px; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+
+    /* Upload progress */
+    .upload-progress {
+      display: none; margin-top: 8px;
+    }
+    .upload-progress.visible { display: block; }
+    .progress-bar-wrap {
+      height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 3px; width: 0;
+      transition: width 0.3s ease;
+    }
+  </style>
 </head>
 <body>
+  <!-- Navbar -->
   <nav class="navbar">
     <a href="/" class="logo">
       <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
@@ -16,75 +149,186 @@
     <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
       <i class="ti ti-arrow-left"></i> Quay lại
     </a>
+    <div class="navbar-right" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+      <div class="auth-buttons" style="display: flex; gap: 8px;">
+        <a href="/login.html" class="btn btn-ghost btn-nav">Đăng nhập</a>
+        <a href="/register.html" class="btn btn-primary btn-nav">Đăng ký</a>
+      </div>
+      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+          <i class="ti ti-bell"></i>
+        </button>
+        <div style="position: relative;">
+          <button class="btn btn-ghost btn-user" id="userMenuBtn">
+            <div class="avatar avatar-sm user-avatar">U</div>
+            <span class="user-name">Người dùng</span>
+            <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
+          </button>
+          <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
+            <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-user"></i> Hồ sơ</a>
+            <a href="/upload.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-upload"></i> Upload tài liệu</a>
+            <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-bookmark"></i> Đã lưu</a>
+            <a href="/change-password.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-lock"></i> Đổi mật khẩu</a>
+            <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
+            <a href="#" id="logoutBtn" class="nav-item" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;"><i class="ti ti-logout"></i> Đăng xuất</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </nav>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="avatarFileInput" accept="image/*" style="display:none">
+  <input type="file" id="coverFileInput" accept="image/*" style="display:none">
+  <input type="file" id="docFileInput" style="display:none">
 
   <main style="padding-top: calc(var(--navbar-height) + 20px);">
     <div class="container" style="max-width: 900px;">
 
-      <!-- Profile Header -->
-      <div id="profileHeader">
-        <div class="skeleton" style="height: 160px; border-radius: var(--radius-md);"></div>
+      <!-- Profile Card -->
+      <div class="profile-card" id="profileCard">
+        <!-- Cover Photo -->
+        <div class="profile-cover" id="coverArea">
+          <img id="coverImg" src="" alt="" style="display:none;">
+          <div class="cover-overlay">
+            <button class="cover-overlay-btn" id="changeCoverBtn" style="display:none;">
+              <i class="ti ti-photo"></i> Đổi ảnh bìa
+            </button>
+          </div>
+        </div>
+
+        <!-- Avatar + Info -->
+        <div style="position: relative;">
+          <div class="avatar-upload-wrap" id="avatarWrap" style="display:none;">
+            <div class="avatar avatar-xl" id="profileAvatar" style="background: var(--bg-elevated); display:flex; align-items:center; justify-content:center;"></div>
+            <div class="avatar-edit-badge"><i class="ti ti-camera"></i> Thay đổi</div>
+          </div>
+
+          <div class="profile-body" id="profileBody">
+            <!-- Skeleton -->
+            <div class="skeleton" style="height: 140px; width: 100%; border-radius: var(--radius-sm);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload progress indicator -->
+      <div id="uploadProgressWrap" class="upload-progress">
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;" id="uploadProgressLabel">Đang upload...</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="uploadProgressBar"></div>
+        </div>
       </div>
 
       <!-- Tab Navigation -->
-      <div class="card" style="padding: 0; margin-top: 20px; overflow: hidden;">
-        <div style="display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;">
-          <button class="profile-tab active" data-tab="posts" style="
-            padding: 12px 20px; background: none; border: none; cursor: pointer;
-            font-size: 0.875rem; font-weight: 500; color: var(--accent);
-            border-bottom: 2px solid var(--accent); white-space: nowrap;">
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="profile-tabs">
+          <button class="profile-tab-btn active" data-tab="posts" id="tab-btn-posts">
             <i class="ti ti-article"></i> Bài viết
           </button>
-          <button class="profile-tab" data-tab="comments" style="
-            padding: 12px 20px; background: none; border: none; cursor: pointer;
-            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
-            border-bottom: 2px solid transparent; white-space: nowrap;">
-            <i class="ti ti-message"></i> Bình luận
-          </button>
-          <button class="profile-tab" data-tab="badges" style="
-            padding: 12px 20px; background: none; border: none; cursor: pointer;
-            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
-            border-bottom: 2px solid transparent; white-space: nowrap;">
+          <button class="profile-tab-btn" data-tab="badges" id="tab-btn-badges">
             <i class="ti ti-medal"></i> Huy hiệu
           </button>
-          <button class="profile-tab" data-tab="activity" style="
-            padding: 12px 20px; background: none; border: none; cursor: pointer;
-            font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
-            border-bottom: 2px solid transparent; white-space: nowrap;">
-            <i class="ti ti-history"></i> Hoạt động gần đây
+          <button class="profile-tab-btn" data-tab="files" id="tab-btn-files" style="display:none;">
+            <i class="ti ti-files"></i> Tài liệu
+          </button>
+          <button class="profile-tab-btn" data-tab="settings" id="tab-btn-settings" style="display:none;">
+            <i class="ti ti-settings"></i> Chỉnh sửa
+          </button>
+          <button class="profile-tab-btn" data-tab="activity" id="tab-btn-activity" style="display:none;">
+            <i class="ti ti-shield"></i> Bảo mật
           </button>
         </div>
 
         <!-- Posts Tab -->
-        <div id="tab-posts" class="profile-tab-content" style="padding: 20px;">
+        <div id="tab-posts" class="profile-tab-content active">
           <div id="userPosts">
             <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
-            <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="height: 110px;"></div>
           </div>
           <div id="postsPagination" class="pagination" style="margin-top: 16px;"></div>
         </div>
 
-        <!-- Comments Tab -->
-        <div id="tab-comments" class="profile-tab-content" style="padding: 20px; display: none;">
-          <div id="userComments">
-            <div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>
-            <div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>
-          </div>
-        </div>
-
         <!-- Badges Tab -->
-        <div id="tab-badges" class="profile-tab-content" style="padding: 20px; display: none;">
+        <div id="tab-badges" class="profile-tab-content">
           <div id="userBadges" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
             <div class="skeleton" style="height: 100px;"></div>
             <div class="skeleton" style="height: 100px;"></div>
+            <div class="skeleton" style="height: 100px;"></div>
+          </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="tab-files" class="profile-tab-content">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; font-size: 1rem;">Tài liệu đã upload</h3>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <select id="fileTypeFilter" class="form-input" style="width: auto; padding: 6px 10px; font-size: 0.8125rem;">
+                <option value="">Tất cả</option>
+                <option value="Image">Ảnh</option>
+                <option value="Pdf">PDF</option>
+                <option value="SourceCode">Source Code</option>
+                <option value="Log">Log</option>
+              </select>
+              <a href="/upload.html" class="btn btn-primary btn-sm"><i class="ti ti-upload"></i> Upload mới</a>
+            </div>
+          </div>
+          <div id="fileList" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="skeleton" style="height: 64px;"></div>
+            <div class="skeleton" style="height: 64px;"></div>
+          </div>
+          <div id="filesPagination" class="pagination" style="margin-top: 16px;"></div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" class="profile-tab-content">
+          <div style="max-width: 480px;">
+            <h3 style="margin: 0 0 20px; font-size: 1rem;">Chỉnh sửa thông tin</h3>
+            <form id="editProfileForm" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="form-group">
+                <label class="form-label">Tên hiển thị</label>
+                <input type="text" id="editDisplayName" class="form-input" maxlength="50" placeholder="Tên hiển thị của bạn">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Giới thiệu bản thân</label>
+                <textarea id="editBio" class="form-input" rows="4" maxlength="1000" placeholder="Viết vài dòng giới thiệu về bản thân..."></textarea>
+                <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted);" id="bioCharCount">0 / 1000</div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                  <i class="ti ti-check"></i> Lưu thay đổi
+                </button>
+                <a href="/change-password.html" class="btn btn-secondary">
+                  <i class="ti ti-lock"></i> Đổi mật khẩu
+                </a>
+              </div>
+              <div id="editProfileMsg" style="display:none;"></div>
+            </form>
+
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+
+            <h3 style="margin: 0 0 14px; font-size: 1rem;">Kiểm tra độ mạnh mật khẩu</h3>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="password" id="pwCheckInput" class="form-input" placeholder="Nhập mật khẩu để kiểm tra..." style="flex:1;">
+              <button class="btn btn-secondary" id="pwCheckBtn"><i class="ti ti-shield-check"></i></button>
+            </div>
+            <div id="pwStrengthResult" style="display:none;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style="flex: 1; background: var(--bg-elevated); border-radius: 2px; height: 6px; overflow: hidden;">
+                  <div id="pwStrengthBar" class="strength-bar" style="height: 100%; width: 0;"></div>
+                </div>
+                <span id="pwStrengthLabel" style="font-size: 0.8rem; font-weight: 600; min-width: 60px;"></span>
+              </div>
+              <div id="pwStrengthChecks" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;"></div>
+            </div>
           </div>
         </div>
 
         <!-- Activity Tab -->
-        <div id="tab-activity" class="profile-tab-content" style="padding: 20px; display: none;">
+        <div id="tab-activity" class="profile-tab-content">
           <div id="userActivity">
             <div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>
             <div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="height: 60px;"></div>
           </div>
         </div>
       </div>
@@ -94,318 +338,495 @@
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/role-guard.js"></script>
+  <script src="/js/notification-bell.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
-    const ProfilePage = {
-      username: null,
-      currentPage: 1,
+  const ProfilePage = {
+    username: null,
+    profileData: null,
+    isOwnProfile: false,
+    currentPage: 1,
+    filesPage: 1,
 
-      async init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        this.username = urlParams.get('username');
+    async init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      this.username = urlParams.get('username');
 
-        if (!this.username) {
+      await AuthManager.restoreSession();
+      const currentUser = AuthManager.getUser();
+
+      // If no username param, redirect to own profile or home
+      if (!this.username) {
+        if (currentUser) {
+          window.location.href = `/profile.html?username=${currentUser.username}`;
+        } else {
           window.location.href = '/';
+        }
+        return;
+      }
+
+      this.isOwnProfile = currentUser?.username === this.username;
+      AuthManager.updateUI();
+      RoleGuard.applyVisibility();
+      this.setupNavbar();
+      this.setupTabs();
+      await this.loadProfile();
+      await this.loadUserPosts(1);
+      this.setupFileUpload();
+    },
+
+    setupNavbar() {
+      const btn = document.getElementById('userMenuBtn');
+      const dd = document.getElementById('userDropdown');
+      if (btn) btn.addEventListener('click', e => { e.stopPropagation(); dd.style.display = dd.style.display === 'none' ? 'block' : 'none'; });
+      document.addEventListener('click', () => { if (dd) dd.style.display = 'none'; });
+      document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); AuthManager.logout(); });
+    },
+
+    setupTabs() {
+      document.querySelectorAll('.profile-tab-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+          document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+
+          const tab = btn.dataset.tab;
+          if (tab === 'badges') this.loadUserBadges();
+          if (tab === 'files') this.loadMyFiles(1);
+          if (tab === 'activity') this.loadUserActivity();
+        });
+      });
+
+      document.getElementById('fileTypeFilter')?.addEventListener('change', () => this.loadMyFiles(1));
+    },
+
+    async loadProfile() {
+      try {
+        const result = await API.users.getProfile(this.username);
+        if (!result.success) {
+          document.getElementById('profileBody').innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-user-off"></i>
+              <h3>Không tìm thấy người dùng</h3>
+              <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
+            </div>`;
           return;
         }
 
-        await AuthManager.restoreSession();
-        AuthManager.updateUI();
-        RoleGuard.applyVisibility();
-        this.setupTabs();
-        await this.loadProfile();
-        await this.loadUserPosts(1);
-      },
+        this.profileData = result.data;
+        const user = result.data;
+        document.title = `${user.displayName || user.username} - CyberForum`;
 
-      setupTabs() {
-        document.querySelectorAll('.profile-tab').forEach(tab => {
-          tab.addEventListener('click', async () => {
-            document.querySelectorAll('.profile-tab').forEach(t => {
-              t.classList.remove('active');
-              t.style.color = 'var(--text-muted)';
-              t.style.borderBottomColor = 'transparent';
-            });
-            tab.classList.add('active');
-            tab.style.color = 'var(--accent)';
-            tab.style.borderBottomColor = 'var(--accent)';
+        // Cover photo
+        const coverImg = document.getElementById('coverImg');
+        if (user.coverPhotoUrl) {
+          coverImg.src = user.coverPhotoUrl;
+          coverImg.style.display = 'block';
+          document.getElementById('coverArea').style.background = 'none';
+        }
 
-            document.querySelectorAll('.profile-tab-content').forEach(c => c.style.display = 'none');
-            document.getElementById(`tab-${tab.dataset.tab}`).style.display = 'block';
+        // Avatar
+        const avatarWrap = document.getElementById('avatarWrap');
+        avatarWrap.style.display = 'block';
+        const avatarEl = document.getElementById('profileAvatar');
+        if (user.avatarUrl) {
+          avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="${user.username}" style="width:100%;height:100%;object-fit:cover;">`;
+        } else {
+          avatarEl.textContent = (user.displayName || user.username).charAt(0).toUpperCase();
+        }
+        if (this.isOwnProfile) {
+          avatarEl.style.cursor = 'pointer';
+          avatarEl.addEventListener('click', () => document.getElementById('avatarFileInput').click());
+        }
 
-            if (tab.dataset.tab === 'comments') this.loadUserComments();
-            if (tab.dataset.tab === 'badges') this.loadUserBadges();
-            if (tab.dataset.tab === 'activity') this.loadUserActivity();
+        // Cover button
+        if (this.isOwnProfile) {
+          document.getElementById('changeCoverBtn').style.display = 'flex';
+          document.getElementById('coverArea').addEventListener('click', () => document.getElementById('coverFileInput').click());
+        }
+
+        // Profile body
+        document.getElementById('profileBody').innerHTML = `
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+              <h1 style="font-size: 1.5rem; margin: 0;">${user.displayName || user.username}</h1>
+              ${AuthManager.renderRoleBadge(user.role)}
+              <span class="rank-badge rank-${user.rank.toLowerCase()}" style="font-size: 0.6875rem;">${user.rank}</span>
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 10px;">@${user.username}</div>
+            ${user.bio ? `<p style="color: var(--text-secondary); font-size: 0.9375rem; line-height: 1.6; margin-bottom: 14px; max-width: 480px;">${user.bio}</p>` : ''}
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <div class="stat-chip"><div class="stat-val">${user.reputationPoints}</div><div class="stat-lbl">Điểm</div></div>
+              <div class="stat-chip"><div class="stat-val">${user.postCount}</div><div class="stat-lbl">Bài viết</div></div>
+              <div class="stat-chip"><div class="stat-val">${user.commentCount}</div><div class="stat-lbl">Bình luận</div></div>
+              <div class="stat-chip"><div class="stat-val">${this.fmtDate(user.createdAt)}</div><div class="stat-lbl">Tham gia</div></div>
+            </div>
+            ${user.badges && user.badges.length ? `
+              <div style="margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap;">
+                ${user.badges.map(b => `
+                  <span class="badge badge-info" style="font-size: 0.6875rem;" title="${b.description || b.name}">
+                    <i class="ti ti-${b.icon || 'award'}"></i> ${b.name}
+                  </span>`).join('')}
+              </div>` : ''}
+          </div>
+          ${this.isOwnProfile ? `
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" id="openEditTabBtn"><i class="ti ti-edit"></i> Chỉnh sửa</button>
+              <a href="/upload.html" class="btn btn-ghost btn-sm"><i class="ti ti-upload"></i> Upload</a>
+            </div>` : ''}`;
+
+        // Show own-profile tabs
+        if (this.isOwnProfile) {
+          document.getElementById('tab-btn-files').style.display = '';
+          document.getElementById('tab-btn-settings').style.display = '';
+          document.getElementById('tab-btn-activity').style.display = '';
+
+          // Pre-fill edit form
+          document.getElementById('editDisplayName').value = user.displayName || '';
+          document.getElementById('editBio').value = user.bio || '';
+          this.updateBioCount();
+
+          document.getElementById('openEditTabBtn')?.addEventListener('click', () => {
+            document.querySelector('[data-tab="settings"]').click();
           });
-        });
-      },
 
-      async loadProfile() {
+          this.setupEditForm();
+          this.setupPasswordCheck();
+        }
+      } catch (e) {
+        document.getElementById('profileBody').innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải hồ sơ</h3></div>`;
+      }
+    },
+
+    // ── Edit profile form ─────────────────────────────────────────────────────
+    setupEditForm() {
+      const bio = document.getElementById('editBio');
+      bio?.addEventListener('input', () => this.updateBioCount());
+
+      document.getElementById('editProfileForm')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = document.getElementById('saveProfileBtn');
+        const msg = document.getElementById('editProfileMsg');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader-2 ti-spin"></i> Đang lưu...';
+
         try {
-          const result = await API.users.getProfile(this.username);
-          if (!result.success) {
-            document.getElementById('profileHeader').innerHTML = `
-              <div class="empty-state">
-                <i class="ti ti-user-off"></i>
-                <h3>Không tìm thấy người dùng</h3>
-                <p>Tài khoản này không tồn tại.</p>
-                <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
-              </div>`;
-            return;
+          const result = await API.users.updateProfile({
+            displayName: document.getElementById('editDisplayName').value.trim(),
+            bio: document.getElementById('editBio').value.trim()
+          });
+          msg.style.display = 'block';
+          if (result.success) {
+            msg.className = 'alert alert-success mt-2';
+            msg.innerHTML = '<i class="ti ti-check"></i> Cập nhật thành công!';
+            Toast.show('Cập nhật hồ sơ thành công!', 'success');
+            await this.loadProfile();
+          } else {
+            msg.className = 'alert alert-danger mt-2';
+            msg.textContent = result.message || 'Cập nhật thất bại';
           }
+        } catch (err) {
+          msg.style.display = 'block';
+          msg.className = 'alert alert-danger mt-2';
+          msg.textContent = err.message || 'Lỗi kết nối';
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ti ti-check"></i> Lưu thay đổi';
+        }
+      });
+    },
 
-          const user = result.data;
-          const currentUser = AuthManager.getUser();
-          const isOwnProfile = currentUser?.username === this.username;
+    updateBioCount() {
+      const bio = document.getElementById('editBio');
+      const counter = document.getElementById('bioCharCount');
+      if (bio && counter) counter.textContent = `${bio.value.length} / 1000`;
+    },
 
-          document.getElementById('profileHeader').innerHTML = `
-            <div class="profile-header" style="display: flex; align-items: flex-start; gap: 24px; padding: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
-              <div class="avatar avatar-xl" style="width: 80px; height: 80px; font-size: 2rem; flex-shrink: 0;">
-                ${user.avatarUrl ? `<img src="${user.avatarUrl}" alt="">` : (user.displayName || user.username).charAt(0).toUpperCase()}
+    // ── Password strength check ───────────────────────────────────────────────
+    setupPasswordCheck() {
+      document.getElementById('pwCheckBtn')?.addEventListener('click', async () => {
+        const pw = document.getElementById('pwCheckInput').value;
+        if (!pw) return;
+        try {
+          const res = await fetch('/api/auth/check-password-strength', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw })
+          });
+          const json = await res.json();
+          if (json.success) this.renderPwStrength(json.data);
+        } catch (e) { Toast.show('Lỗi kiểm tra mật khẩu', 'error'); }
+      });
+
+      document.getElementById('pwCheckInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('pwCheckBtn').click();
+      });
+    },
+
+    renderPwStrength(data) {
+      const colors = { 'Yếu': '#f85149', 'Trung bình': '#f0883e', 'Khá': '#e3b341', 'Mạnh': '#2ecc71', 'Rất mạnh': '#00e5a0' };
+      const widths = { 'Yếu': 20, 'Trung bình': 40, 'Khá': 60, 'Mạnh': 80, 'Rất mạnh': 100 };
+      const el = document.getElementById('pwStrengthResult');
+      el.style.display = 'block';
+      const bar = document.getElementById('pwStrengthBar');
+      const lbl = document.getElementById('pwStrengthLabel');
+      const color = colors[data.level] || '#8b949e';
+      bar.style.width = (widths[data.level] || 20) + '%';
+      bar.style.background = color;
+      lbl.textContent = data.level;
+      lbl.style.color = color;
+
+      const checks = [
+        { ok: data.hasMinLength, label: '≥ 8 ký tự' },
+        { ok: data.hasUppercase, label: 'Chữ HOA' },
+        { ok: data.hasLowercase, label: 'Chữ thường' },
+        { ok: data.hasDigit, label: 'Chữ số' },
+        { ok: data.hasSpecialChar, label: 'Ký tự đặc biệt' },
+        { ok: data.hasNoCommonPatterns, label: 'Không phổ biến' }
+      ];
+      document.getElementById('pwStrengthChecks').innerHTML = checks.map(c => `
+        <div style="display:flex;align-items:center;gap:4px;font-size:0.75rem;color:${c.ok ? 'var(--accent)' : 'var(--text-muted)'};">
+          <i class="ti ${c.ok ? 'ti-check' : 'ti-x'}" style="font-size:0.85rem;"></i> ${c.label}
+        </div>`).join('');
+    },
+
+    // ── File upload ───────────────────────────────────────────────────────────
+    setupFileUpload() {
+      const avatarInput = document.getElementById('avatarFileInput');
+      const coverInput = document.getElementById('coverFileInput');
+
+      avatarInput?.addEventListener('change', async () => {
+        const file = avatarInput.files[0];
+        if (!file) return;
+        await this.uploadFile('/api/upload/avatar', file, 'Đang upload avatar...');
+        avatarInput.value = '';
+        await this.loadProfile();
+      });
+
+      coverInput?.addEventListener('change', async () => {
+        const file = coverInput.files[0];
+        if (!file) return;
+        await this.uploadFile('/api/upload/cover', file, 'Đang upload ảnh bìa...');
+        coverInput.value = '';
+        await this.loadProfile();
+      });
+    },
+
+    async uploadFile(endpoint, file, label) {
+      const wrap = document.getElementById('uploadProgressWrap');
+      const bar = document.getElementById('uploadProgressBar');
+      const lbl = document.getElementById('uploadProgressLabel');
+      wrap.classList.add('visible');
+      lbl.textContent = label;
+      bar.style.width = '10%';
+
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(endpoint, { method: 'POST', body: fd, credentials: 'include' });
+        bar.style.width = '80%';
+        const json = await res.json();
+        bar.style.width = '100%';
+        if (json.success) {
+          Toast.show('Upload thành công!', 'success');
+        } else {
+          Toast.show(json.message || 'Upload thất bại', 'error');
+        }
+      } catch (e) {
+        Toast.show('Lỗi upload: ' + e.message, 'error');
+      } finally {
+        setTimeout(() => { wrap.classList.remove('visible'); bar.style.width = '0'; }, 800);
+      }
+    },
+
+    // ── Posts tab ─────────────────────────────────────────────────────────────
+    async loadUserPosts(page = 1) {
+      this.currentPage = page;
+      const container = document.getElementById('userPosts');
+      container.innerHTML = `<div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div><div class="skeleton" style="height: 110px;"></div>`;
+
+      try {
+        const result = await API.posts.getAll({ page, pageSize: 10 });
+        const userPosts = (result.data || []).filter(p => p.authorUsername === this.username);
+
+        if (!userPosts.length) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-article-off"></i><h3>Chưa có bài viết</h3><p>Người dùng này chưa đăng bài viết nào.</p></div>`;
+          return;
+        }
+
+        container.innerHTML = userPosts.map(post => `
+          <article class="post-card">
+            <div class="post-votes">
+              <button class="vote-btn"><i class="ti ti-arrow-up"></i></button>
+              <span class="vote-count ${(post.upvoteCount - post.downvoteCount) > 0 ? 'positive' : (post.upvoteCount - post.downvoteCount) < 0 ? 'negative' : ''}">${post.upvoteCount - post.downvoteCount}</span>
+              <button class="vote-btn"><i class="ti ti-arrow-down"></i></button>
+            </div>
+            <div class="post-content">
+              <div class="d-flex justify-between align-start gap-2">
+                <a href="/post.html?id=${post.id}" class="post-title" style="text-decoration: none;">
+                  ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 6px; font-size: 0.625rem;"><i class="ti ti-pinned"></i> Ghim</span>' : ''}
+                  ${post.title}
+                </a>
+                ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted);" title="Đã khóa"></i>' : ''}
+              </div>
+              <div class="post-meta">
+                <span class="post-meta-item"><i class="ti ti-clock"></i> ${this.fmtAgo(post.createdAt)}</span>
+                <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
+                <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
+                <a href="/category.html?slug=${post.categorySlug}" class="category-tag ${post.categorySlug}" style="text-decoration:none;">${post.categoryName}</a>
+              </div>
+              ${post.tags && post.tags.length ? `<div class="post-tags">${post.tags.map(t => `<span class="post-tag">${t}</span>`).join('')}</div>` : ''}
+            </div>
+          </article>`).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải bài viết</h3></div>`;
+      }
+    },
+
+    // ── Files tab ─────────────────────────────────────────────────────────────
+    async loadMyFiles(page = 1) {
+      this.filesPage = page;
+      const container = document.getElementById('fileList');
+      container.innerHTML = `<div class="skeleton" style="height: 64px;"></div><div class="skeleton" style="height: 64px; margin-top: 8px;"></div>`;
+
+      const fileType = document.getElementById('fileTypeFilter')?.value || '';
+
+      try {
+        const params = new URLSearchParams({ page, pageSize: 15 });
+        if (fileType) params.append('fileType', fileType);
+        const res = await fetch(`/api/upload/my-files?${params}`, { credentials: 'include' });
+        const result = await res.json();
+
+        if (!result.success || !result.data?.length) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-files-off"></i>
+              <h3>Chưa có tài liệu nào</h3>
+              <p>Bạn chưa upload tài liệu nào.</p>
+              <a href="/upload.html" class="btn btn-primary mt-3"><i class="ti ti-upload"></i> Upload ngay</a>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = result.data.map(f => {
+          const icons = { Image: 'ti-photo', Pdf: 'ti-file-type-pdf', SourceCode: 'ti-code', Log: 'ti-file-text', Other: 'ti-file' };
+          const cls = { Image: 'img', Pdf: 'pdf', SourceCode: 'code', Log: 'log', Other: '' };
+          return `
+            <div class="file-card">
+              <div class="file-icon ${cls[f.fileType] || ''}">
+                <i class="ti ${icons[f.fileType] || 'ti-file'}"></i>
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.originalFileName}">${f.originalFileName}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                  ${f.fileSizeFormatted} · ${this.fmtAgo(f.uploadedAt)}
+                  ${f.postId ? `· <a href="/post.html?id=${f.postId}" style="color: var(--accent);">Xem bài viết</a>` : ''}
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                <a href="${f.fileUrl}" target="_blank" class="btn btn-ghost btn-sm" title="Xem / Tải xuống">
+                  <i class="ti ti-download"></i>
+                </a>
+                <button class="btn btn-ghost btn-sm" style="color: var(--accent-red);" onclick="ProfilePage.deleteFile(${f.id})" title="Xóa">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải danh sách file</h3></div>`;
+      }
+    },
+
+    async deleteFile(id) {
+      if (!confirm('Bạn có chắc muốn xóa file này?')) return;
+      try {
+        const res = await fetch(`/api/upload/${id}`, { method: 'DELETE', credentials: 'include' });
+        const result = await res.json();
+        if (result.success) {
+          Toast.show('Đã xóa file', 'success');
+          this.loadMyFiles(this.filesPage);
+        } else {
+          Toast.show(result.message || 'Xóa thất bại', 'error');
+        }
+      } catch (e) {
+        Toast.show('Lỗi xóa file: ' + e.message, 'error');
+      }
+    },
+
+    // ── Badges tab ────────────────────────────────────────────────────────────
+    async loadUserBadges() {
+      const container = document.getElementById('userBadges');
+      try {
+        const currentUser = AuthManager.getUser();
+        const result = await API.badges.getUserBadges(this.profileData?.id || currentUser?.id);
+        if (!result.success || !result.data?.length) {
+          container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><i class="ti ti-medal"></i><h3>Chưa có huy hiệu</h3><p>Tích cực tham gia để nhận huy hiệu!</p></div>`;
+          return;
+        }
+        container.innerHTML = result.data.map(b => `
+          <div class="card" style="text-align: center; padding: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: ${b.color}22; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: ${b.color};">
+              <i class="ti ti-${b.icon || 'award'}" style="font-size: 1.25rem;"></i>
+            </div>
+            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 4px;">${b.name}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${b.description || ''}</div>
+          </div>`).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><i class="ti ti-alert-circle"></i><h3>Lỗi tải huy hiệu</h3></div>`;
+      }
+    },
+
+    // ── Activity tab ──────────────────────────────────────────────────────────
+    async loadUserActivity() {
+      const container = document.getElementById('userActivity');
+      try {
+        const res = await fetch('/api/security/my-logs?page=1&pageSize=15', { credentials: 'include' });
+        const result = await res.json();
+        if (!result.success || !result.data?.length) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-history"></i><h3>Chưa có hoạt động</h3><p>Lịch sử đăng nhập và bảo mật sẽ hiển thị tại đây.</p></div>`;
+          return;
+        }
+        const actionMap = { Login: 'Đăng nhập', Logout: 'Đăng xuất', FailedLogin: 'Đăng nhập thất bại', ChangePassword: 'Đổi mật khẩu', SuspiciousActivity: 'Hoạt động bất thường', RoleChange: 'Đổi vai trò' };
+        container.innerHTML = result.data.map(log => {
+          const ok = log.isSuccess;
+          const color = ok ? 'var(--accent)' : 'var(--accent-red)';
+          return `
+            <div style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: ${color}22; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="ti ${ok ? 'ti-check' : 'ti-x'}" style="color: ${color};"></i>
               </div>
               <div style="flex: 1;">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
-                  <h1 style="font-size: 1.5rem; margin: 0;">${user.displayName || user.username}</h1>
-                  ${AuthManager.renderRoleBadge(user.role)}
-                  <span class="rank-badge rank-${user.rank.toLowerCase()}" style="font-size: 0.6875rem;">${user.rank}</span>
-                </div>
-                <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 12px;">@${user.username}</div>
-                ${user.bio ? `<p style="color: var(--text-secondary); font-size: 0.9375rem; line-height: 1.6; margin-bottom: 12px;">${user.bio}</p>` : ''}
-
-                <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-                  <div style="text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.reputationPoints}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Điểm</div>
-                  </div>
-                  <div style="text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.postCount}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Bài viết</div>
-                  </div>
-                  <div style="text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">${user.commentCount}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Bình luận</div>
-                  </div>
-                  <div style="text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted);">${this.formatDate(user.createdAt)}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Tham gia</div>
-                  </div>
-                </div>
-
-                ${user.badges && user.badges.length ? `
-                  <div style="margin-top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    ${user.badges.map(b => `
-                      <span class="badge badge-info" style="font-size: 0.6875rem;" title="${b.description || b.name}">
-                        <i class="ti ti-${b.icon || 'award'}" style="font-size: 0.6875rem;"></i> ${b.name}
-                      </span>
-                    `).join('')}
-                  </div>
-                ` : ''}
+                <div style="font-size: 0.875rem; font-weight: 500;">${actionMap[log.action] || log.action}</div>
+                <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;">${log.description || ''} ${log.ipAddress ? '· ' + log.ipAddress : ''}</div>
               </div>
-
-              ${isOwnProfile ? `
-                <a href="/settings.html" class="btn btn-secondary btn-sm">
-                  <i class="ti ti-edit"></i> Chỉnh sửa hồ sơ
-                </a>
-              ` : ''}
+              <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">${this.fmtAgo(log.createdAt)}</div>
             </div>`;
-
-          document.title = `${user.displayName || user.username} - CyberForum`;
-        } catch (e) {
-          document.getElementById('profileHeader').innerHTML = `
-            <div class="empty-state">
-              <i class="ti ti-alert-circle"></i>
-              <h3>Lỗi khi tải hồ sơ</h3>
-            </div>`;
-        }
-      },
-
-      async loadUserPosts(page = 1) {
-        this.currentPage = page;
-        const container = document.getElementById('userPosts');
-        container.innerHTML = `
-          <div class="skeleton" style="height: 110px; margin-bottom: 12px;"></div>
-          <div class="skeleton" style="height: 110px;"></div>`;
-
-        try {
-          const result = await API.posts.getAll({ page, pageSize: 10 });
-          const userPosts = (result.data || []).filter(p => p.authorUsername === this.username);
-
-          if (!userPosts.length) {
-            container.innerHTML = `
-              <div class="empty-state">
-                <i class="ti ti-article-off"></i>
-                <h3>Chưa có bài viết nào</h3>
-                <p>Người dùng này chưa đăng bài viết nào.</p>
-              </div>`;
-            return;
-          }
-
-          container.innerHTML = userPosts.map(post => `
-            <article class="post-card">
-              <div class="post-votes">
-                <button class="vote-btn ${post.userVote === 1 ? 'upvoted' : ''}" onclick="ProfilePage.votePost(${post.id}, true)">
-                  <i class="ti ti-arrow-up"></i>
-                </button>
-                <span class="vote-count ${post.upvoteCount - post.downvoteCount > 0 ? 'positive' : post.upvoteCount - post.downvoteCount < 0 ? 'negative' : ''}">
-                  ${post.upvoteCount - post.downvoteCount}
-                </span>
-                <button class="vote-btn ${post.userVote === -1 ? 'downvoted' : ''}" onclick="ProfilePage.votePost(${post.id}, false)">
-                  <i class="ti ti-arrow-down"></i>
-                </button>
-              </div>
-              <div class="post-content">
-                <div class="d-flex justify-between align-start gap-2">
-                  <a href="/post.html?id=${post.id}" class="post-title" style="text-decoration: none;">
-                    ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 6px; font-size: 0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>' : ''}
-                    ${post.title}
-                  </a>
-                  ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted); flex-shrink: 0;" title="Đã khóa"></i>' : ''}
-                </div>
-                <div class="post-meta">
-                  <span class="post-meta-item"><i class="ti ti-clock"></i> ${this.formatTimeAgo(post.createdAt)}</span>
-                  <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
-                  <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
-                  <a href="/category.html?slug=${post.categorySlug}" class="category-tag ${post.categorySlug}" style="text-decoration: none;">${post.categoryName}</a>
-                </div>
-                ${post.tags && post.tags.length ? `
-                  <div class="post-tags">
-                    ${post.tags.map(tag => `<span class="post-tag">${tag}</span>`).join('')}
-                  </div>
-                ` : ''}
-              </div>
-            </article>
-          `).join('');
-        } catch (e) {
-          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải bài viết</h3></div>`;
-        }
-      },
-
-      async loadUserComments() {
-        const container = document.getElementById('userComments');
-        container.innerHTML = `<div class="skeleton" style="height: 80px; margin-bottom: 12px;"></div>`;
-
-        try {
-          const result = await API.activity.getMy();
-          if (!result.success || !result.data?.length) {
-            container.innerHTML = `
-              <div class="empty-state">
-                <i class="ti ti-message-off"></i>
-                <h3>Chưa có bình luận nào</h3>
-                <p>Người dùng này chưa bình luận bài viết nào.</p>
-              </div>`;
-            return;
-          }
-
-          const comments = result.data.filter(a => a.type === 'COMMENT_CREATED');
-          container.innerHTML = comments.map(item => `
-            <div class="card mb-3" style="padding: 14px;">
-              <div style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 6px;">
-                <i class="ti ti-message"></i> Bình luận · ${this.formatTimeAgo(item.createdAt)}
-              </div>
-              <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">${item.details || 'Nội dung bình luận'}</div>
-            </div>
-          `).join('');
-        } catch (e) {
-          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải bình luận</h3></div>`;
-        }
-      },
-
-      async loadUserBadges() {
-        const container = document.getElementById('userBadges');
-        try {
-          const user = AuthManager.getUser();
-          const result = await API.badges.getUserBadges(user?.id);
-          if (!result.success || !result.data?.length) {
-            container.innerHTML = `
-              <div class="empty-state" style="grid-column: 1 / -1;">
-                <i class="ti ti-medal"></i>
-                <h3>Chưa có huy hiệu nào</h3>
-                <p>Tích cực tham gia để nhận huy hiệu!</p>
-              </div>`;
-            return;
-          }
-
-          container.innerHTML = result.data.map(badge => `
-            <div class="card" style="text-align: center; padding: 16px;">
-              <div style="width: 48px; height: 48px; border-radius: 50%; background: ${badge.color}22; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: ${badge.color};">
-                <i class="ti ti-${badge.icon || 'award'}" style="font-size: 1.25rem;"></i>
-              </div>
-              <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 4px;">${badge.name}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">${badge.description || ''}</div>
-            </div>
-          `).join('');
-        } catch (e) {
-          container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải huy hiệu</h3></div>`;
-        }
-      },
-
-      async loadUserActivity() {
-        const container = document.getElementById('userActivity');
-        const user = AuthManager.getUser();
-        if (!user) {
-          container.innerHTML = `<div class="empty-state"><i class="ti ti-lock"></i><h3>Đăng nhập để xem</h3></div>`;
-          return;
-        }
-        try {
-          const result = await API.security.getMyLogs({ page: 1, pageSize: 10 });
-          if (!result.success || !result.data?.length) {
-            container.innerHTML = `<div class="empty-state"><i class="ti ti-history"></i><h3>Chưa có hoạt động</h3><p>Hoạt động đăng nhập và bảo mật sẽ hiển thị tại đây.</p></div>`;
-            return;
-          }
-          container.innerHTML = result.data.map(log => {
-            const isSuccess = log.isSuccess;
-            const icon = isSuccess ? 'ti-check' : 'ti-x';
-            const color = isSuccess ? 'var(--accent)' : 'var(--accent-red)';
-            const actionMap = {
-              'Login': 'Đăng nhập', 'Logout': 'Đăng xuất', 'FailedLogin': 'Đăng nhập thất bại',
-              'ChangePassword': 'Đổi mật khẩu', 'EditPost': 'Sửa bài viết', 'DeletePost': 'Xóa bài viết',
-              'BanUser': 'Khóa tài khoản', 'UnbanUser': 'Mở khóa tài khoản',
-              'SuspiciousActivity': 'Hoạt động bất thường', 'RoleChange': 'Đổi vai trò'
-            };
-            const label = actionMap[log.action] || log.action;
-            return `
-              <div style="display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${color}22; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <i class="ti ${icon}" style="color: ${color}; font-size: 1rem;"></i>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 0.875rem; font-weight: 500;">${label}</div>
-                  <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;">${log.description || ''} ${log.ipAddress ? '· ' + log.ipAddress : ''}</div>
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">${ProfileManager.formatTimeAgo(log.createdAt)}</div>
-              </div>`;
-          }).join('');
-        } catch (e) {
-          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải hoạt động</h3></div>`;
-        }
-      },
-
-      async votePost(postId, isUpvote) {
-        if (!AuthManager.isAuthenticated()) { Toast.show('Vui lòng đăng nhập để bình chọn', 'warning'); return; }
-        try {
-          await API.posts.vote(postId, isUpvote);
-          Toast.show('Đã bình chọn', 'success');
-        } catch (e) {
-          Toast.show(e.message || 'Lỗi khi bình chọn', 'error');
-        }
-      },
-
-      formatTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
-        if (seconds < 60) return 'vài giây trước';
-        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
-        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
-        return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
-      },
-
-      formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải hoạt động</h3></div>`;
       }
-    };
+    },
 
-    document.addEventListener('DOMContentLoaded', () => ProfilePage.init());
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    fmtAgo(dateStr) {
+      const secs = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+      if (secs < 60) return 'vài giây trước';
+      if (secs < 3600) return `${Math.floor(secs / 60)} phút trước`;
+      if (secs < 86400) return `${Math.floor(secs / 3600)} giờ trước`;
+      if (secs < 604800) return `${Math.floor(secs / 86400)} ngày trước`;
+      return new Date(dateStr).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+    },
+
+    fmtDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => ProfilePage.init());
   </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

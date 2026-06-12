@@ -16,8 +16,9 @@ public class PostService : IPostService
     private readonly IBadgeService _badgeService;
     private readonly ISecurityLogService _securityLogService;
     private readonly IHtmlSanitizer _htmlSanitizer;
+    private readonly INotificationService _notificationService;
 
-    public PostService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService, IRoleService roleService, ISecurityLogService securityLogService)
+    public PostService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService, IRoleService roleService, ISecurityLogService securityLogService, INotificationService notificationService)
     {
         _context = context;
         _activityLog = activityLog;
@@ -25,6 +26,7 @@ public class PostService : IPostService
         _htmlSanitizer = new HtmlSanitizer();
         _roleService = roleService;
         _securityLogService = securityLogService;
+        _notificationService = notificationService;
     }
 
     private static string StripHtml(string html)
@@ -441,6 +443,11 @@ public class PostService : IPostService
                 existingVote.IsUpvote = isUpvote;
 
                 await UpdateReputation(post.AuthorId, isUpvote ? 15 : -15);
+                
+                if (userId != post.AuthorId)
+                {
+                    await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
+                }
             }
         }
         else
@@ -459,6 +466,11 @@ public class PostService : IPostService
                 post.DownvoteCount++;
 
             await UpdateReputation(post.AuthorId, isUpvote ? 10 : -5);
+            
+            if (userId != post.AuthorId)
+            {
+                await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
+            }
         }
 
         await _context.SaveChangesAsync();

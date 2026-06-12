@@ -41,6 +41,7 @@ public class UserService : IUserService
             Username = user.Username,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
+            CoverPhotoUrl = user.CoverPhotoUrl,
             Bio = user.Bio,
             Role = user.Role.ToString(),
             Rank = user.Rank.ToString(),
@@ -77,6 +78,9 @@ public class UserService : IUserService
 
         if (dto.AvatarUrl != null)
             user.AvatarUrl = dto.AvatarUrl;
+
+        if (dto.CoverPhotoUrl != null)
+            user.CoverPhotoUrl = dto.CoverPhotoUrl;
 
         user.UpdatedAt = DateTime.UtcNow;
 
@@ -196,6 +200,7 @@ public class UserService : IUserService
         Email = user.Email,
         DisplayName = user.DisplayName,
         AvatarUrl = user.AvatarUrl,
+        CoverPhotoUrl = user.CoverPhotoUrl,
         Bio = user.Bio,
         Role = user.Role.ToString(),
         Rank = user.Rank.ToString(),

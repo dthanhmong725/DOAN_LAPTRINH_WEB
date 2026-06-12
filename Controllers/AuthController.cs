@@ -5,6 +5,7 @@ using DOAN_LAPTRINHWEB.Models.DTOs;
 
 namespace DOAN_LAPTRINHWEB.Controllers;
 
+/// <summary>Xác thực và phân quyền người dùng</summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
