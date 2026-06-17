@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/code-block.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/notification-bell.css">
 </head>
 <body>
   <nav class="navbar">
@@ -41,14 +42,20 @@
             <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-user"></i> Hồ sơ
             </a>
+            <a href="/reputation.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-star"></i> Điểm uy tín
+            </a>
             <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-bookmark"></i> Đã lưu
             </a>
             <a href="/change-password.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-settings"></i> Cài đặt
             </a>
+            <a href="/admin.html" class="nav-item requires-admin" style="padding: 8px 12px; display: none; align-items: center; gap: 8px;">
+              <i class="ti ti-shield"></i> Quản trị
+            </a>
             <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
-            <a href="#" id="logoutBtn" class="nav-item" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+            <a href="javascript:void(0)" data-action="logout" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-logout"></i> Đăng xuất
             </a>
           </div>
@@ -100,6 +107,7 @@
   <script src="/js/role-guard.js"></script>
   <script src="/js/post-renderer.js"></script>
   <script src="/js/notification-bell.js"></script>
+  <script src="/js/site.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
   <script>
@@ -129,7 +137,7 @@
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none'; });
       }
       document.addEventListener('click', () => { if (userDropdown) userDropdown.style.display = 'none'; });
-      document.getElementById('logoutBtn')?.addEventListener('click', (e) => { e.preventDefault(); AuthManager.logout(); });
+      document.querySelectorAll('[data-action="logout"]').forEach(btn => { btn.addEventListener('click', (e) => { e.preventDefault(); AuthManager.logout(); }); });
     });
 
     async function loadPost() {
@@ -477,4 +485,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
 

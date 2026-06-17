@@ -1,427 +1,51 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Tài Liệu - CyberForum</title>
-  <meta name="description" content="Upload ảnh, PDF, source code và file log lên CyberForum. Quản lý tất cả tài liệu của bạn tại một nơi.">
+  <title>Quản lý file - CyberForum</title>
+  <meta http-equiv="refresh" content="0;url=/create-post.html">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/themes/cyber.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-  <style>
-    /* Drop zone */
-    .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius-md);
-      padding: 48px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: var(--bg-elevated);
-      position: relative;
-    }
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: color-mix(in srgb, var(--accent) 5%, var(--bg-elevated));
-    }
-    .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .drop-zone-icon {
-      font-size: 3rem; color: var(--text-muted);
-      margin-bottom: 12px; display: block;
-      transition: color 0.2s, transform 0.2s;
-    }
-    .drop-zone:hover .drop-zone-icon, .drop-zone.drag-over .drop-zone-icon {
-      color: var(--accent); transform: scale(1.1);
-    }
-
-    /* File type chips */
-    .type-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-    .type-chip {
-      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
-      background: var(--bg-elevated); cursor: pointer; font-size: 0.8125rem;
-      display: flex; align-items: center; gap: 6px;
-      transition: all 0.15s;
-    }
-    .type-chip.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated)); }
-
-    /* Progress */
-    .upload-item {
-      background: var(--bg-elevated); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 14px 16px;
-      display: flex; align-items: center; gap: 14px;
-    }
-    .upload-item .file-icon {
-      width: 40px; height: 40px; border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-    .progress-track {
-      flex: 1; height: 6px; background: var(--bg-base);
-      border-radius: 3px; overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%; background: var(--accent); border-radius: 3px;
-      transition: width 0.3s ease; width: 0;
-    }
-
-    /* File grid */
-    .file-grid { display: flex; flex-direction: column; gap: 8px; }
-    .file-row {
-      display: flex; align-items: center; gap: 14px; padding: 12px 14px;
-      background: var(--bg-elevated); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); transition: border-color 0.15s;
-    }
-    .file-row:hover { border-color: var(--accent-dim); }
-    .file-row .fi {
-      width: 38px; height: 38px; border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; flex-shrink: 0;
-    }
-    .fi-img  { background: #388bfd22; color: #388bfd; }
-    .fi-pdf  { background: #f8514922; color: #f85149; }
-    .fi-code { background: #bc8cff22; color: #bc8cff; }
-    .fi-log  { background: #f0883e22; color: #f0883e; }
-    .fi-other{ background: #8b949e22; color: #8b949e; }
-
-    /* Copy toast */
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .copy-toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 10px 18px;
-      font-size: 0.875rem; z-index: 9999; animation: fadeUp 0.2s ease;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/notification-bell.css">
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar">
     <a href="/" class="logo">
       <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
     </a>
-    <a href="javascript:history.back()" class="btn btn-ghost" style="margin-left: 12px;">
+    <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
       <i class="ti ti-arrow-left"></i> Quay lại
     </a>
-    <div class="navbar-right" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-      <div class="auth-buttons" style="display: flex; gap: 8px;">
-        <a href="/login.html" class="btn btn-ghost btn-nav">Đăng nhập</a>
-        <a href="/register.html" class="btn btn-primary btn-nav">Đăng ký</a>
-      </div>
-      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
-        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
-          <i class="ti ti-bell"></i>
-        </button>
-        <div style="position: relative;">
-          <button class="btn btn-ghost btn-user" id="userMenuBtn">
-            <div class="avatar avatar-sm user-avatar">U</div>
-            <span class="user-name">Người dùng</span>
-            <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
-          </button>
-          <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
-            <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-user"></i> Hồ sơ</a>
-            <a href="/upload.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px; color: var(--accent);"><i class="ti ti-upload"></i> Upload</a>
-            <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-bookmark"></i> Đã lưu</a>
-            <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
-            <a href="#" id="logoutBtn" class="nav-item" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;"><i class="ti ti-logout"></i> Đăng xuất</a>
-          </div>
-        </div>
-      </div>
-    </div>
   </nav>
-
-  <main style="padding-top: calc(var(--navbar-height) + 24px);">
-    <div class="container" style="max-width: 860px;">
-
-      <!-- Header -->
-      <div style="margin-bottom: 24px;">
-        <h1 style="font-size: 1.5rem; margin: 0 0 6px;">
-          <i class="ti ti-cloud-upload" style="color: var(--accent);"></i> Upload Tài Liệu
-        </h1>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
-          Hỗ trợ: Ảnh (JPG/PNG/GIF/WebP ≤5MB) · PDF ≤20MB · Source code ≤20MB · Log/TXT ≤20MB
+  <main style="padding-top: calc(var(--navbar-height) + 40px);">
+    <div class="container" style="max-width: 600px; text-align: center;">
+      <div class="card" style="padding: 40px;">
+        <i class="ti ti-info-circle" style="font-size: 3rem; color: var(--accent); margin-bottom: 16px; display: block;"></i>
+        <h2 style="margin-bottom: 12px;">Trang này đã được tích hợp</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">
+          Tính năng upload tài liệu hiện đã được tích hợp trực tiếp vào trang
+          <strong>Tạo bài viết</strong> và <strong>Sửa bài viết</strong>.
+          Bạn có thể đính kèm tài liệu (PDF, hình ảnh, video, file code...) ngay khi viết bài.
         </p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 320px; gap: 20px;" id="mainGrid">
-
-        <!-- Left: Upload area -->
-        <div>
-          <!-- Drop zone -->
-          <div class="drop-zone" id="dropZone">
-            <input type="file" id="fileInput" multiple accept="image/*,.pdf,.cs,.js,.ts,.py,.java,.cpp,.c,.h,.go,.rs,.html,.css,.json,.xml,.yaml,.yml,.sh,.bat,.ps1,.md,.sql,.php,.rb,.kt,.swift,.vue,.jsx,.tsx,.log,.txt">
-            <i class="ti ti-cloud-upload drop-zone-icon"></i>
-            <div style="font-size: 1rem; font-weight: 600; margin-bottom: 6px;">Kéo thả file vào đây</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">hoặc click để chọn file</div>
-          </div>
-
-          <!-- Optional: attach to post -->
-          <div class="card" style="padding: 14px 16px; margin-top: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <label style="font-size: 0.875rem; color: var(--text-muted); white-space: nowrap;">
-                <i class="ti ti-paperclip"></i> Gắn vào bài viết (tùy chọn):
-              </label>
-              <input type="number" id="postIdInput" class="form-input" placeholder="ID bài viết..." style="width: 160px; padding: 6px 10px; font-size: 0.875rem;">
-              <span style="font-size: 0.75rem; color: var(--text-muted);">Để trống nếu không cần</span>
-            </div>
-          </div>
-
-          <!-- Upload queue -->
-          <div id="uploadQueue" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;"></div>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="/create-post.html" class="btn btn-primary">
+            <i class="ti ti-edit"></i> Tạo bài viết mới
+          </a>
+          <a href="/profile.html" class="btn btn-secondary">
+            <i class="ti ti-arrow-left"></i> Về trang cá nhân
+          </a>
         </div>
-
-        <!-- Right: My files -->
-        <div>
-          <div class="card" style="padding: 0; overflow: hidden;">
-            <div style="padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 0.9375rem; font-weight: 600;">
-                <i class="ti ti-files" style="color: var(--accent);"></i> Tài liệu của tôi
-              </div>
-              <select id="filterType" class="form-input" style="width: auto; padding: 4px 8px; font-size: 0.8rem;">
-                <option value="">Tất cả</option>
-                <option value="Image">Ảnh</option>
-                <option value="Pdf">PDF</option>
-                <option value="SourceCode">Code</option>
-                <option value="Log">Log</option>
-              </select>
-            </div>
-            <div id="myFileList" style="padding: 12px; display: flex; flex-direction: column; gap: 6px; min-height: 200px; max-height: 520px; overflow-y: auto;">
-              <div class="skeleton" style="height: 56px;"></div>
-              <div class="skeleton" style="height: 56px;"></div>
-              <div class="skeleton" style="height: 56px;"></div>
-            </div>
-            <div id="fileListPagination" style="padding: 10px 12px; border-top: 1px solid var(--border);"></div>
-          </div>
-        </div>
-
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 20px; margin-bottom: 0;">
+          Đang chuyển hướng tự động...
+        </p>
       </div>
     </div>
   </main>
-
-  <script src="/js/api.js"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/role-guard.js"></script>
-  <script src="/js/notification-bell.js"></script>
   <script>
-  const UploadPage = {
-    page: 1,
-
-    async init() {
-      await AuthManager.restoreSession();
-      if (!AuthManager.isAuthenticated()) {
-        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
-        return;
-      }
-      AuthManager.updateUI();
-      this.setupNavbar();
-      this.setupDropZone();
-      this.setupFilter();
-      await this.loadFiles(1);
-    },
-
-    setupNavbar() {
-      const btn = document.getElementById('userMenuBtn');
-      const dd  = document.getElementById('userDropdown');
-      btn?.addEventListener('click', e => { e.stopPropagation(); dd.style.display = dd.style.display === 'none' ? 'block' : 'none'; });
-      document.addEventListener('click', () => { if (dd) dd.style.display = 'none'; });
-      document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); AuthManager.logout(); });
-    },
-
-    // ── Drop zone ─────────────────────────────────────────────────────────────
-    setupDropZone() {
-      const zone = document.getElementById('dropZone');
-      const input = document.getElementById('fileInput');
-
-      ['dragenter', 'dragover'].forEach(e => zone.addEventListener(e, ev => { ev.preventDefault(); zone.classList.add('drag-over'); }));
-      ['dragleave', 'drop'].forEach(e => zone.addEventListener(e, () => zone.classList.remove('drag-over')));
-      zone.addEventListener('drop', ev => { ev.preventDefault(); this.handleFiles(ev.dataTransfer.files); });
-      input.addEventListener('change', () => { this.handleFiles(input.files); input.value = ''; });
-    },
-
-    setupFilter() {
-      document.getElementById('filterType')?.addEventListener('change', () => this.loadFiles(1));
-    },
-
-    handleFiles(files) {
-      if (!files || !files.length) return;
-      Array.from(files).forEach(f => this.uploadFile(f));
-    },
-
-    async uploadFile(file) {
-      const postId = document.getElementById('postIdInput').value.trim();
-      const queueId = 'q-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-
-      const ext = file.name.split('.').pop().toLowerCase();
-      const typeMap = {
-        jpg: 'img', jpeg: 'img', png: 'img', gif: 'img', webp: 'img', bmp: 'img', svg: 'img',
-        pdf: 'pdf',
-        cs: 'code', js: 'code', ts: 'code', py: 'code', java: 'code', cpp: 'code', c: 'code',
-        go: 'code', rs: 'code', html: 'code', css: 'code', json: 'code', xml: 'code', sql: 'code',
-        php: 'code', rb: 'code', kt: 'code', swift: 'code', vue: 'code', jsx: 'code', tsx: 'code',
-        sh: 'code', bat: 'code', ps1: 'code', md: 'code', yaml: 'code', yml: 'code',
-        log: 'log', txt: 'log'
-      };
-      const iconMap = { img: 'ti-photo', pdf: 'ti-file-type-pdf', code: 'ti-code', log: 'ti-file-text' };
-      const typeClass = typeMap[ext] || 'other';
-      const icon = iconMap[typeClass] || 'ti-file';
-
-      // Add to queue UI
-      const item = document.createElement('div');
-      item.id = queueId;
-      item.className = 'upload-item';
-      item.innerHTML = `
-        <div class="file-icon fi-${typeClass}"><i class="ti ${icon}"></i></div>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${file.name}">${file.name}</div>
-          <div class="progress-track" style="margin-top: 6px;"><div class="progress-fill" id="pf-${queueId}"></div></div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;" id="pst-${queueId}">Đang chuẩn bị...</div>
-        </div>`;
-      document.getElementById('uploadQueue').appendChild(item);
-
-      const bar = () => document.getElementById(`pf-${queueId}`);
-      const status = () => document.getElementById(`pst-${queueId}`);
-
-      try {
-        const fd = new FormData();
-        fd.append('file', file);
-        if (postId) fd.append('postId', postId);
-
-        // Animate
-        bar().style.width = '15%';
-        status().textContent = 'Đang upload...';
-
-        const res = await fetch('/api/upload/document', {
-          method: 'POST', body: fd, credentials: 'include'
-        });
-        bar().style.width = '85%';
-        const result = await res.json();
-        bar().style.width = '100%';
-
-        if (result.success) {
-          bar().style.background = 'var(--accent)';
-          status().innerHTML = `<span style="color: var(--accent);"><i class="ti ti-check"></i> Thành công · ${result.data.fileSizeFormatted}</span>
-            <a href="${result.data.fileUrl}" target="_blank" style="margin-left: 8px; color: var(--accent); font-size: 0.75rem;">Xem</a>`;
-          Toast.show(`"${file.name}" đã upload thành công!`, 'success');
-          setTimeout(() => { item.remove(); this.loadFiles(this.page); }, 3000);
-        } else {
-          bar().style.background = 'var(--accent-red)';
-          status().innerHTML = `<span style="color: var(--accent-red);"><i class="ti ti-x"></i> ${result.message || 'Upload thất bại'}</span>`;
-          setTimeout(() => item.remove(), 4000);
-        }
-      } catch (err) {
-        bar().style.background = 'var(--accent-red)';
-        status().innerHTML = `<span style="color: var(--accent-red);"><i class="ti ti-x"></i> Lỗi kết nối</span>`;
-        setTimeout(() => item.remove(), 4000);
-      }
-    },
-
-    // ── File list ─────────────────────────────────────────────────────────────
-    async loadFiles(page = 1) {
-      this.page = page;
-      const container = document.getElementById('myFileList');
-      container.innerHTML = `<div class="skeleton" style="height: 56px;"></div><div class="skeleton" style="height: 56px; margin-top: 6px;"></div>`;
-
-      const ft = document.getElementById('filterType')?.value || '';
-      const params = new URLSearchParams({ page, pageSize: 20 });
-      if (ft) params.append('fileType', ft);
-
-      try {
-        const res = await fetch(`/api/upload/my-files?${params}`, { credentials: 'include' });
-        const result = await res.json();
-
-        if (!result.success || !result.data?.length) {
-          container.innerHTML = `
-            <div style="text-align: center; padding: 30px 0; color: var(--text-muted);">
-              <i class="ti ti-files-off" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
-              <div style="font-size: 0.875rem;">Chưa có file nào</div>
-            </div>`;
-          document.getElementById('fileListPagination').innerHTML = '';
-          return;
-        }
-
-        const iconMap = { Image: { icon: 'ti-photo', cls: 'fi-img' }, Pdf: { icon: 'ti-file-type-pdf', cls: 'fi-pdf' }, SourceCode: { icon: 'ti-code', cls: 'fi-code' }, Log: { icon: 'ti-file-text', cls: 'fi-log' }, Other: { icon: 'ti-file', cls: 'fi-other' } };
-
-        container.innerHTML = result.data.map(f => {
-          const { icon, cls } = iconMap[f.fileType] || iconMap.Other;
-          return `
-            <div class="file-row">
-              <div class="fi ${cls}"><i class="ti ${icon}"></i></div>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 0.8125rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.originalFileName}">${f.originalFileName}</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted);">${f.fileSizeFormatted} · ${this.fmtAgo(f.uploadedAt)}</div>
-              </div>
-              <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                <button class="btn btn-ghost" style="padding: 4px 8px;" onclick="UploadPage.copyLink('${f.fileUrl}')" title="Copy link">
-                  <i class="ti ti-copy" style="font-size: 0.9rem;"></i>
-                </button>
-                <a href="${f.fileUrl}" target="_blank" class="btn btn-ghost" style="padding: 4px 8px;" title="Mở">
-                  <i class="ti ti-external-link" style="font-size: 0.9rem;"></i>
-                </a>
-                <button class="btn btn-ghost" style="padding: 4px 8px; color: var(--accent-red);" onclick="UploadPage.deleteFile(${f.id})" title="Xóa">
-                  <i class="ti ti-trash" style="font-size: 0.9rem;"></i>
-                </button>
-              </div>
-            </div>`;
-        }).join('');
-
-        // Pagination
-        const totalPages = Math.ceil(result.totalItems / result.pageSize);
-        if (totalPages > 1) {
-          document.getElementById('fileListPagination').innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-              <button class="btn btn-ghost btn-sm" ${page <= 1 ? 'disabled' : ''} onclick="UploadPage.loadFiles(${page - 1})">‹ Trước</button>
-              <span>${page} / ${totalPages}</span>
-              <button class="btn btn-ghost btn-sm" ${page >= totalPages ? 'disabled' : ''} onclick="UploadPage.loadFiles(${page + 1})">Sau ›</button>
-            </div>`;
-        } else {
-          document.getElementById('fileListPagination').innerHTML = `<div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">${result.totalItems} file</div>`;
-        }
-      } catch (e) {
-        container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--accent-red);"><i class="ti ti-alert-circle"></i> Lỗi khi tải danh sách</div>`;
-      }
-    },
-
-    async deleteFile(id) {
-      if (!confirm('Bạn có chắc muốn xóa file này?')) return;
-      try {
-        const res = await fetch(`/api/upload/${id}`, { method: 'DELETE', credentials: 'include' });
-        const result = await res.json();
-        if (result.success) {
-          Toast.show('Đã xóa file', 'success');
-          this.loadFiles(this.page);
-        } else {
-          Toast.show(result.message || 'Xóa thất bại', 'error');
-        }
-      } catch (e) {
-        Toast.show('Lỗi: ' + e.message, 'error');
-      }
-    },
-
-    async copyLink(url) {
-      const fullUrl = window.location.origin + url;
-      try {
-        await navigator.clipboard.writeText(fullUrl);
-        const toast = document.createElement('div');
-        toast.className = 'copy-toast';
-        toast.innerHTML = '<i class="ti ti-check" style="color: var(--accent);"></i> Đã copy link!';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-      } catch (e) {
-        Toast.show('Không copy được: ' + e.message, 'error');
-      }
-    },
-
-    fmtAgo(dateStr) {
-      const secs = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-      if (secs < 60) return 'vài giây trước';
-      if (secs < 3600) return `${Math.floor(secs / 60)} phút trước`;
-      if (secs < 86400) return `${Math.floor(secs / 3600)} giờ trước`;
-      return new Date(dateStr).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' });
-    }
-  };
-
-  document.addEventListener('DOMContentLoaded', () => UploadPage.init());
+    setTimeout(() => { window.location.href = '/create-post.html'; }, 3000);
   </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 

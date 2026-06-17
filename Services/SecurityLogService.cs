@@ -62,7 +62,7 @@ public class SecurityLogService : ISecurityLogService
                 IsSuccess = s.IsSuccess,
                 CreatedAt = s.CreatedAt,
                 UserId = s.UserId,
-                Username = s.User.Username
+                Username = s.User != null ? s.User.Username : "(unknown)"
             })
             .ToListAsync();
 
@@ -108,7 +108,7 @@ public class SecurityLogService : ISecurityLogService
                 IsSuccess = s.IsSuccess,
                 CreatedAt = s.CreatedAt,
                 UserId = s.UserId,
-                Username = s.User.Username
+                Username = s.User != null ? s.User.Username : "(unknown)"
             })
             .ToListAsync();
 

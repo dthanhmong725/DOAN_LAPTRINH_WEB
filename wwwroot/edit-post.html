@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/notification-bell.css">
 </head>
 <body>
   <nav class="navbar">
@@ -37,14 +38,20 @@
             <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-user"></i> Hồ sơ
             </a>
+            <a href="/reputation.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-star"></i> Điểm uy tín
+            </a>
             <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-bookmark"></i> Đã lưu
             </a>
             <a href="/change-password.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-settings"></i> Cài đặt
             </a>
+            <a href="/admin.html" class="nav-item requires-admin" style="padding: 8px 12px; display: none; align-items: center; gap: 8px;">
+              <i class="ti ti-shield"></i> Quản trị
+            </a>
             <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
-            <a href="#" id="logoutBtn" class="nav-item" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+            <a href="javascript:void(0)" data-action="logout" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
               <i class="ti ti-logout"></i> Đăng xuất
             </a>
           </div>
@@ -90,6 +97,32 @@
           <span class="form-hint">Tối đa 5 tags, cách nhau bởi dấu phẩy</span>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">
+            <i class="ti ti-paperclip"></i> Tài liệu đính kèm
+          </label>
+          <div id="uploadDropZone" style="
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            background: var(--bg-surface2);
+            cursor: pointer;
+            transition: all 0.2s;
+          " onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <i class="ti ti-cloud-upload" style="font-size: 2rem; color: var(--accent); margin-bottom: 8px;"></i>
+            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">
+              Kéo thả file hoặc bấm để chọn
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+              Hỗ trợ: PDF, Word, Excel, hình ảnh, video, code files... (tối đa 50MB mỗi file)
+            </div>
+            <input type="file" id="postFileInput" multiple style="display:none"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z,.jpg,.jpeg,.png,.gif,.webp,.svg,.mp4,.webm,.py,.js,.ts,.java,.cpp,.c,.cs,.php,.go,.rs,.rb,.sh,.json,.xml,.yaml,.yml,.md">
+          </div>
+          <div id="uploadedFiles" style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
         <div class="d-flex justify-between align-center mt-4">
           <a href="/" class="btn btn-secondary">Hủy bỏ</a>
           <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -107,6 +140,7 @@
   <script src="/js/auth.js"></script>
   <script src="/js/role-guard.js"></script>
   <script src="/js/notification-bell.js"></script>
+  <script src="/js/site.js"></script>
   <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
@@ -114,6 +148,8 @@
     let quillEditor = null;
     let currentPostId = null;
     let originalAuthorId = null;
+    const uploadedAttachments = [];
+    let existingAttachments = []; // Attachments đã có sẵn từ post
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
@@ -122,6 +158,97 @@
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
       return tmp.textContent || tmp.innerText || '';
+    }
+
+    function getFileIcon(filename) {
+      const ext = (filename.split('.').pop() || '').toLowerCase();
+      const iconMap = {
+        pdf: 'ti-file-text', doc: 'ti-file-text', docx: 'ti-file-text',
+        xls: 'ti-file-spreadsheet', xlsx: 'ti-file-spreadsheet',
+        ppt: 'ti-file-presentation', pptx: 'ti-file-presentation',
+        zip: 'ti-file-zip', rar: 'ti-file-zip', '7z': 'ti-file-zip',
+        jpg: 'ti-photo', jpeg: 'ti-photo', png: 'ti-photo', gif: 'ti-photo', webp: 'ti-photo', svg: 'ti-photo',
+        mp4: 'ti-video', webm: 'ti-video', mov: 'ti-video', avi: 'ti-video',
+        mp3: 'ti-music', wav: 'ti-music', ogg: 'ti-music',
+        py: 'ti-code', js: 'ti-code', ts: 'ti-code', java: 'ti-code',
+        cpp: 'ti-code', c: 'ti-code', cs: 'ti-code', php: 'ti-code',
+        go: 'ti-code', rs: 'ti-code', rb: 'ti-code', sh: 'ti-code',
+        json: 'ti-code', xml: 'ti-code', yaml: 'ti-code', yml: 'ti-code', md: 'ti-code',
+        txt: 'ti-file'
+      };
+      return iconMap[ext] || 'ti-file';
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+      return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+    }
+
+    function renderUploadedFiles() {
+      const container = document.getElementById('uploadedFiles');
+      const all = [
+        ...existingAttachments.map(a => ({ ...a, type: 'existing' })),
+        ...uploadedAttachments.map(a => ({ ...a, type: 'new' }))
+      ];
+      if (all.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = all.map((att, i) => `
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+          <i class="ti ${getFileIcon(att.fileName)}" style="color: var(--accent); font-size: 1.2rem;"></i>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${att.fileName}</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">${formatFileSize(att.fileSize)}${att.type === 'existing' ? ' (đã có)' : ''}</div>
+          </div>
+          <a href="${att.url}" target="_blank" style="color: var(--accent-blue); padding: 4px;">
+            <i class="ti ti-external-link"></i>
+          </a>
+          <button type="button" onclick="removeAttachment(${i}, '${att.type}')" style="background: transparent; border: none; color: var(--accent-red); cursor: pointer; padding: 4px;">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function removeAttachment(index, type) {
+      if (type === 'existing') {
+        existingAttachments.splice(index, 1);
+      } else {
+        const newIdx = index - existingAttachments.length;
+        if (newIdx >= 0) uploadedAttachments.splice(newIdx, 1);
+      }
+      renderUploadedFiles();
+    }
+
+    async function handleFiles(files) {
+      for (const file of files) {
+        if (file.size > 50 * 1024 * 1024) {
+          Toast.show(`File "${file.name}" quá lớn (tối đa 50MB)`, 'warning');
+          continue;
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const result = await API.upload.file(formData);
+          if (result.success) {
+            uploadedAttachments.push({
+              fileName: file.name,
+              fileSize: file.size,
+              url: result.data.url
+            });
+            renderUploadedFiles();
+            Toast.show(`Đã tải lên ${file.name}`, 'success');
+          } else {
+            Toast.show(result.message || `Lỗi tải lên ${file.name}`, 'error');
+          }
+        } catch (err) {
+          Toast.show(`Lỗi tải lên ${file.name}: ${err.message}`, 'error');
+        }
+      }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -137,7 +264,31 @@
         userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none'; });
       }
       document.addEventListener('click', () => { if (userDropdown) userDropdown.style.display = 'none'; });
-      document.getElementById('logoutBtn')?.addEventListener('click', (e) => { e.preventDefault(); AuthManager.logout(); });
+      document.querySelectorAll('[data-action="logout"]').forEach(btn => { btn.addEventListener('click', (e) => { e.preventDefault(); AuthManager.logout(); }); });
+
+      // File upload - dropzone
+      const dropZone = document.getElementById('uploadDropZone');
+      const fileInput = document.getElementById('postFileInput');
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent)';
+        dropZone.style.background = 'rgba(0, 229, 160, 0.05)';
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'var(--border)';
+        dropZone.style.background = 'var(--bg-surface2)';
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border)';
+        dropZone.style.background = 'var(--bg-surface2)';
+        handleFiles(e.dataTransfer.files);
+      });
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        e.target.value = '';
+      });
 
       currentPostId = parseInt(postId);
 
@@ -200,6 +351,16 @@
         document.getElementById('tagsInput').value = (post.tags || []).join(', ');
         document.getElementById('categorySelect').value = post.category.id;
 
+        // Load existing attachments
+        if (post.attachments && Array.isArray(post.attachments)) {
+          existingAttachments = post.attachments.map(a => ({
+            fileName: a.fileName || a.FileName,
+            url: a.url || a.Url,
+            fileSize: a.fileSize || a.FileSize || 0
+          }));
+          renderUploadedFiles();
+        }
+
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('editPostForm').style.display = 'block';
 
@@ -256,7 +417,11 @@
           title: title,
           content: content,
           categoryId: parseInt(document.getElementById('categorySelect').value),
-          tags: tags
+          tags: tags,
+          attachments: [
+            ...existingAttachments,
+            ...uploadedAttachments
+          ]
         };
 
         submitBtn.disabled = true;
@@ -290,4 +455,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
 

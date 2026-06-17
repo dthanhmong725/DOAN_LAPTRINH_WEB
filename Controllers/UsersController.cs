@@ -45,6 +45,19 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Lấy thông tin user hiện tại (đang đăng nhập) - dùng cho settings page</summary>
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetCurrentUserProfile()
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _userService.GetByIdAsync(userId);
+
+        if (!result.Success)
+            return NotFound(result);
+
+        return Ok(result);
+    }
+
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
     {

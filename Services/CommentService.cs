@@ -15,14 +15,21 @@ public class CommentService : ICommentService
     private readonly IBadgeService _badgeService;
     private readonly IHtmlSanitizer _htmlSanitizer;
     private readonly INotificationService _notificationService;
+    private readonly IReputationService _reputationService;
 
-    public CommentService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService, INotificationService notificationService)
+    public CommentService(
+        AppDbContext context,
+        IActivityLogService activityLog,
+        IBadgeService badgeService,
+        INotificationService notificationService,
+        IReputationService reputationService)
     {
         _context = context;
         _activityLog = activityLog;
         _badgeService = badgeService;
         _htmlSanitizer = new HtmlSanitizer();
         _notificationService = notificationService;
+        _reputationService = reputationService;
     }
 
     public async Task<PaginatedResponse<CommentDto>> GetByPostAsync(int postId, int page, int pageSize, int? userId)
@@ -90,6 +97,16 @@ public class CommentService : ICommentService
         await _context.SaveChangesAsync();
 
         await _activityLog.LogAsync(ActivityType.CommentCreate, authorId, null, null, $"Comment on post: {post.Title}");
+
+        // ===== TÍCH HỢP REPUTATION: Cộng điểm khi bình luận =====
+        await _reputationService.ApplyChangeAsync(
+            userId: authorId,
+            action: ReputationAction.CommentCreated,
+            actorId: authorId,
+            postId: postId,
+            commentId: comment.Id,
+            description: $"Đã bình luận vào bài viết: {post.Title}");
+
         await _badgeService.CheckAndAwardBadgesAsync(authorId);
 
         // Notify parent comment author if it's a reply
@@ -164,6 +181,15 @@ public class CommentService : ICommentService
         await _context.SaveChangesAsync();
         await _activityLog.LogAsync(ActivityType.CommentDelete, userId, null, null, $"Comment deleted on post ID: {comment.PostId}");
 
+        // ===== TÍCH HỢP REPUTATION: Trừ điểm khi bình luận bị xóa =====
+        await _reputationService.ApplyChangeAsync(
+            userId: comment.AuthorId,
+            action: ReputationAction.CommentDeleted,
+            actorId: userId,
+            postId: comment.PostId,
+            commentId: commentId,
+            description: "Bình luận đã bị xóa");
+
         return ApiResponse<bool>.SuccessResponse(true, "Comment deleted");
     }
 
@@ -176,6 +202,10 @@ public class CommentService : ICommentService
         if (comment == null)
             return ApiResponse<bool>.ErrorResponse("Comment not found");
 
+        // Không vote comment của chính mình
+        if (comment.AuthorId == userId)
+            return ApiResponse<bool>.ErrorResponse("Bạn không thể vote bình luận của chính mình");
+
         var existingVote = await _context.CommentVotes
             .FirstOrDefaultAsync(v => v.CommentId == commentId && v.UserId == userId);
 
@@ -183,14 +213,21 @@ public class CommentService : ICommentService
         {
             if (existingVote.IsUpvote == isUpvote)
             {
+                // Bỏ vote
                 _context.CommentVotes.Remove(existingVote);
-                if (isUpvote)
-                    comment.UpvoteCount--;
-                else
-                    comment.DownvoteCount--;
+                if (isUpvote) comment.UpvoteCount--;
+                else comment.DownvoteCount--;
+
+                // Hoàn điểm
+                await _reputationService.ApplyChangeAsync(
+                    userId: comment.AuthorId,
+                    action: isUpvote ? ReputationAction.UpvoteRemoved : ReputationAction.DownvoteRemoved,
+                    actorId: userId,
+                    commentId: commentId);
             }
             else
             {
+                // Đổi chiều vote
                 if (existingVote.IsUpvote)
                 {
                     comment.UpvoteCount--;
@@ -202,15 +239,18 @@ public class CommentService : ICommentService
                     comment.UpvoteCount++;
                 }
                 existingVote.IsUpvote = isUpvote;
-                
-                if (userId != comment.AuthorId)
-                {
-                    await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
-                }
+
+                var reverseAction = existingVote.IsUpvote ? ReputationAction.CommentDownvoted : ReputationAction.CommentUpvoted;
+                var newAction = existingVote.IsUpvote ? ReputationAction.CommentUpvoted : ReputationAction.CommentDownvoted;
+                await _reputationService.ApplyChangeAsync(comment.AuthorId, reverseAction, userId, null, commentId);
+                await _reputationService.ApplyChangeAsync(comment.AuthorId, newAction, userId, null, commentId);
+
+                await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
             }
         }
         else
         {
+            // Vote mới
             _context.CommentVotes.Add(new CommentVote
             {
                 CommentId = commentId,
@@ -218,15 +258,18 @@ public class CommentService : ICommentService
                 IsUpvote = isUpvote
             });
 
-            if (isUpvote)
-                comment.UpvoteCount++;
-            else
-                comment.DownvoteCount++;
-                
-            if (userId != comment.AuthorId)
-            {
-                await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
-            }
+            if (isUpvote) comment.UpvoteCount++;
+            else comment.DownvoteCount++;
+
+            // ===== TÍCH HỢP REPUTATION =====
+            var action = isUpvote ? ReputationAction.CommentUpvoted : ReputationAction.CommentDownvoted;
+            await _reputationService.ApplyChangeAsync(
+                userId: comment.AuthorId,
+                action: action,
+                actorId: userId,
+                commentId: commentId);
+
+            await _notificationService.CreateAsync(comment.AuthorId, userId, isUpvote ? NotificationType.CommentUpvote : NotificationType.CommentDownvote, comment.PostId, commentId);
         }
 
         await _context.SaveChangesAsync();
@@ -246,10 +289,8 @@ public class CommentService : ICommentService
         if (comment == null)
             return ApiResponse<bool>.ErrorResponse("Comment not found");
 
-        if (vote.IsUpvote)
-            comment.UpvoteCount--;
-        else
-            comment.DownvoteCount--;
+        if (vote.IsUpvote) comment.UpvoteCount--;
+        else comment.DownvoteCount--;
 
         _context.CommentVotes.Remove(vote);
         await _context.SaveChangesAsync();
@@ -283,7 +324,8 @@ public class CommentService : ICommentService
                 DisplayName = comment.Author.DisplayName,
                 AvatarUrl = comment.Author.AvatarUrl,
                 Role = comment.Author.Role.ToString(),
-                Rank = comment.Author.Rank.ToString()
+                Rank = comment.Author.Rank.ToString(),
+                ReputationPoints = comment.Author.ReputationPoints
             },
             ParentCommentId = comment.ParentCommentId,
             UserVote = userVote,

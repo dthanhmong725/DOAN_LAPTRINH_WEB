@@ -84,4 +84,130 @@ public class ChatController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("rooms/{roomId}/messages")]
+    public async Task<IActionResult> SendMessage(int roomId, [FromBody] SendMessageRequestDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.SendMessageAsync(roomId, userId, dto.Content, dto.AttachmentUrl, dto.AttachmentType, dto.ReplyToId);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpPut("messages/{messageId}")]
+    public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.EditMessageAsync(messageId, userId, dto.Content);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpDelete("messages/{messageId}")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.DeleteMessageAsync(messageId, userId);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpPost("messages/{messageId}/reactions")]
+    public async Task<IActionResult> ToggleReaction(int messageId, [FromBody] ReactionRequestDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.ToggleReactionAsync(messageId, userId, dto.Emoji);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpPost("messages/{messageId}/pin")]
+    public async Task<IActionResult> TogglePinMessage(int messageId)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.TogglePinMessageAsync(messageId, userId);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpGet("rooms/{roomId}/pinned")]
+    public async Task<IActionResult> GetPinnedMessage(int roomId)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.GetPinnedMessageAsync(roomId, userId);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpGet("rooms/{roomId}/search")]
+    public async Task<IActionResult> SearchMessages(int roomId, [FromQuery] string q, [FromQuery] int page = 1, [FromQuery] int pageSize = 30)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        if (string.IsNullOrWhiteSpace(q))
+            return BadRequest(new { success = false, message = "Từ khóa tìm kiếm trống" });
+
+        var result = await _chatService.SearchMessagesAsync(roomId, userId, q, page, pageSize);
+        return Ok(result);
+    }
+
+    [HttpPost("rooms/{roomId}/members")]
+    public async Task<IActionResult> AddMember(int roomId, [FromBody] AddMemberRequestDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.AddMemberAsync(roomId, userId, dto.Username);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpPost("rooms/{roomId}/read")]
+    public async Task<IActionResult> MarkAsRead(int roomId)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _chatService.MarkAsReadAsync(roomId, userId);
+        return Ok(result);
+    }
+}
+
+public class SendMessageRequestDto
+{
+    public string Content { get; set; } = string.Empty;
+    public string? AttachmentUrl { get; set; }
+    public string? AttachmentType { get; set; }
+    public int? ReplyToId { get; set; }
+}
+
+public class EditMessageDto
+{
+    public string Content { get; set; } = string.Empty;
+}
+
+public class ReactionRequestDto
+{
+    public string Emoji { get; set; } = string.Empty;
+}
+
+public class AddMemberRequestDto
+{
+    public string Username { get; set; } = string.Empty;
 }

@@ -17,8 +17,16 @@ public class PostService : IPostService
     private readonly ISecurityLogService _securityLogService;
     private readonly IHtmlSanitizer _htmlSanitizer;
     private readonly INotificationService _notificationService;
+    private readonly IReputationService _reputationService;
 
-    public PostService(AppDbContext context, IActivityLogService activityLog, IBadgeService badgeService, IRoleService roleService, ISecurityLogService securityLogService, INotificationService notificationService)
+    public PostService(
+        AppDbContext context,
+        IActivityLogService activityLog,
+        IBadgeService badgeService,
+        IRoleService roleService,
+        ISecurityLogService securityLogService,
+        INotificationService notificationService,
+        IReputationService reputationService)
     {
         _context = context;
         _activityLog = activityLog;
@@ -27,6 +35,7 @@ public class PostService : IPostService
         _roleService = roleService;
         _securityLogService = securityLogService;
         _notificationService = notificationService;
+        _reputationService = reputationService;
     }
 
     private static string StripHtml(string html)
@@ -83,6 +92,7 @@ public class PostService : IPostService
                 AuthorUsername = p.Author.Username,
                 AuthorAvatar = p.Author.AvatarUrl,
                 AuthorRole = p.Author.Role.ToString(),
+                AuthorReputation = p.Author.ReputationPoints,
                 CategoryName = p.Category!.Name,
                 CategorySlug = p.Category!.Slug,
                 Tags = p.PostTags.Select(pt => pt.Name).ToList()
@@ -230,6 +240,14 @@ public class PostService : IPostService
         await _context.SaveChangesAsync();
         await _activityLog.LogAsync(ActivityType.PostCreate, authorId, null, null, $"Post created: {post.Title}");
 
+        // ===== TÍCH HỢP REPUTATION: Cộng điểm khi đăng bài =====
+        await _reputationService.ApplyChangeAsync(
+            userId: authorId,
+            action: ReputationAction.PostCreated,
+            actorId: authorId,
+            postId: post.Id,
+            description: $"Đã đăng bài viết: {post.Title}");
+
         // Check for badges
         await _badgeService.CheckAndAwardBadgesAsync(authorId);
 
@@ -371,6 +389,14 @@ public class PostService : IPostService
         await _context.SaveChangesAsync();
         await _securityLogService.LogAsync(userId, SecurityAction.DeletePost, null, null, $"Xóa bài viết: {post.Title}", true);
 
+        // ===== TÍCH HỢP REPUTATION: Trừ điểm khi bài bị xóa =====
+        await _reputationService.ApplyChangeAsync(
+            userId: post.AuthorId,
+            action: ReputationAction.PostDeleted,
+            actorId: userId,
+            postId: post.Id,
+            description: $"Bài viết bị xóa: {post.Title}");
+
         return ApiResponse<bool>.SuccessResponse(true, "Bài viết đã được xóa");
     }
 
@@ -410,26 +436,32 @@ public class PostService : IPostService
         if (post == null)
             return ApiResponse<bool>.ErrorResponse("Post not found");
 
+        // Không vote bài của chính mình
+        if (post.AuthorId == userId)
+            return ApiResponse<bool>.ErrorResponse("Bạn không thể vote bài viết của chính mình");
+
         var existingVote = await _context.PostVotes
             .FirstOrDefaultAsync(v => v.PostId == postId && v.UserId == userId);
 
         if (existingVote != null)
         {
-            // Update existing vote
             if (existingVote.IsUpvote == isUpvote)
             {
-                // Remove vote
+                // Bỏ vote
                 _context.PostVotes.Remove(existingVote);
-                if (isUpvote)
-                    post.UpvoteCount--;
-                else
-                    post.DownvoteCount--;
+                if (isUpvote) post.UpvoteCount--;
+                else post.DownvoteCount--;
 
-                await UpdateReputation(post.AuthorId, isUpvote ? -10 : 5);
+                // Hoàn điểm
+                await _reputationService.ApplyChangeAsync(
+                    userId: post.AuthorId,
+                    action: isUpvote ? ReputationAction.UpvoteRemoved : ReputationAction.DownvoteRemoved,
+                    actorId: userId,
+                    postId: postId);
             }
             else
             {
-                // Change vote direction
+                // Đổi chiều vote
                 if (existingVote.IsUpvote)
                 {
                     post.UpvoteCount--;
@@ -442,17 +474,18 @@ public class PostService : IPostService
                 }
                 existingVote.IsUpvote = isUpvote;
 
-                await UpdateReputation(post.AuthorId, isUpvote ? 15 : -15);
-                
-                if (userId != post.AuthorId)
-                {
-                    await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
-                }
+                // Áp dụng thay đổi điểm: trừ cũ + cộng mới
+                var reverseAction = existingVote.IsUpvote ? ReputationAction.PostDownvoted : ReputationAction.PostUpvoted;
+                var newAction = existingVote.IsUpvote ? ReputationAction.PostUpvoted : ReputationAction.PostDownvoted;
+                await _reputationService.ApplyChangeAsync(post.AuthorId, reverseAction, userId, postId);
+                await _reputationService.ApplyChangeAsync(post.AuthorId, newAction, userId, postId);
+
+                await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
             }
         }
         else
         {
-            // New vote
+            // Vote mới
             _context.PostVotes.Add(new PostVote
             {
                 PostId = postId,
@@ -460,17 +493,18 @@ public class PostService : IPostService
                 IsUpvote = isUpvote
             });
 
-            if (isUpvote)
-                post.UpvoteCount++;
-            else
-                post.DownvoteCount++;
+            if (isUpvote) post.UpvoteCount++;
+            else post.DownvoteCount++;
 
-            await UpdateReputation(post.AuthorId, isUpvote ? 10 : -5);
-            
-            if (userId != post.AuthorId)
-            {
-                await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
-            }
+            // ===== TÍCH HỢP REPUTATION: Cộng/trừ điểm cho tác giả =====
+            var action = isUpvote ? ReputationAction.PostUpvoted : ReputationAction.PostDownvoted;
+            await _reputationService.ApplyChangeAsync(
+                userId: post.AuthorId,
+                action: action,
+                actorId: userId,
+                postId: postId);
+
+            await _notificationService.CreateAsync(post.AuthorId, userId, isUpvote ? NotificationType.PostUpvote : NotificationType.PostDownvote, postId);
         }
 
         await _context.SaveChangesAsync();
@@ -491,10 +525,8 @@ public class PostService : IPostService
         if (post == null)
             return ApiResponse<bool>.ErrorResponse("Post not found");
 
-        if (vote.IsUpvote)
-            post.UpvoteCount--;
-        else
-            post.DownvoteCount--;
+        if (vote.IsUpvote) post.UpvoteCount--;
+        else post.DownvoteCount--;
 
         _context.PostVotes.Remove(vote);
         await _context.SaveChangesAsync();
@@ -512,23 +544,6 @@ public class PostService : IPostService
         await _context.SaveChangesAsync();
 
         return ApiResponse<bool>.SuccessResponse(true);
-    }
-
-    private async Task UpdateReputation(int userId, int points)
-    {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null) return;
-
-        user.ReputationPoints = Math.Max(0, user.ReputationPoints + points);
-        user.Rank = user.ReputationPoints switch
-        {
-            >= 5000 => UserRank.Elite,
-            >= 2000 => UserRank.Expert,
-            >= 500 => UserRank.Professional,
-            >= 100 => UserRank.Practitioner,
-            >= 25 => UserRank.Learner,
-            _ => UserRank.Newbie
-        };
     }
 
     private static string GenerateSlug(string title)

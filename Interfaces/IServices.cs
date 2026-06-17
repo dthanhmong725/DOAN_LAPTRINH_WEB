@@ -83,6 +83,16 @@ public interface IChatService
     Task<ApiResponse<bool>> JoinChatRoomAsync(int roomId, int userId);
     Task<ApiResponse<bool>> LeaveChatRoomAsync(int roomId, int userId);
     Task<PaginatedResponse<ChatMessageDto>> GetMessagesAsync(int roomId, int page, int pageSize, int userId);
+    Task<ApiResponse<ChatMessageDto>> SendMessageAsync(int roomId, int userId, string content, string? attachmentUrl, string? attachmentType, int? replyToId);
+    Task<ApiResponse<bool>> EditMessageAsync(int messageId, int userId, string newContent);
+    Task<ApiResponse<bool>> DeleteMessageAsync(int messageId, int userId);
+    Task<ApiResponse<bool>> ToggleReactionAsync(int messageId, int userId, string emoji);
+    Task<ApiResponse<bool>> TogglePinMessageAsync(int messageId, int userId);
+    Task<ApiResponse<ChatMessageDto?>> GetPinnedMessageAsync(int roomId, int userId);
+    Task<PaginatedResponse<ChatMessageDto>> SearchMessagesAsync(int roomId, int userId, string term, int page, int pageSize);
+    Task<ApiResponse<bool>> AddMemberAsync(int roomId, int adderUserId, string username);
+    Task<ApiResponse<bool>> MarkAsReadAsync(int roomId, int userId);
+    Task<ApiResponse<bool>> UpdateLastReadAsync(int roomId, int userId);
 }
 
 public interface IPasswordStrengthService

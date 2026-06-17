@@ -4,6 +4,7 @@ using DOAN_LAPTRINHWEB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DOAN_LAPTRINHWEB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617014848_AddReputationHistory")]
+    partial class AddReputationHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,7 +111,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Color = "#6c757d",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1538),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6391),
                             Description = "Created your first post",
                             Icon = "file-text",
                             Name = "First Post",
@@ -119,7 +122,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 2,
                             Color = "#ffc107",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1541),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6395),
                             Description = "Made 10 posts",
                             Icon = "star",
                             Name = "Active Member",
@@ -130,7 +133,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 3,
                             Color = "#17a2b8",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1543),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6397),
                             Description = "Made 50 posts",
                             Icon = "award",
                             Name = "Contributor",
@@ -141,7 +144,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 4,
                             Color = "#28a745",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1544),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6398),
                             Description = "Made 100 posts",
                             Icon = "shield",
                             Name = "Veteran",
@@ -152,7 +155,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 5,
                             Color = "#fd7e14",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1545),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6399),
                             Description = "Received 10 upvotes",
                             Icon = "thumbs-up",
                             Name = "Helpful",
@@ -163,7 +166,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 6,
                             Color = "#dc3545",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1546),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6400),
                             Description = "Received 50 upvotes",
                             Icon = "heart",
                             Name = "Popular",
@@ -174,7 +177,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 7,
                             Color = "#6f42c1",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1547),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6402),
                             Description = "Received 100 upvotes",
                             Icon = "crown",
                             Name = "Legendary",
@@ -185,7 +188,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 8,
                             Color = "#20c997",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1548),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6403),
                             Description = "Bookmarked 10 posts",
                             Icon = "bookmark",
                             Name = "Bookworm",
@@ -196,7 +199,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 9,
                             Color = "#0dcaf0",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1550),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6404),
                             Description = "Posted between midnight and 5 AM",
                             Icon = "moon",
                             Name = "Night Owl",
@@ -207,7 +210,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 10,
                             Color = "#ffc107",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1551),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6405),
                             Description = "Reached 100 reputation points",
                             Icon = "trophy",
                             Name = "Century Club",
@@ -301,7 +304,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Color = "#f85149",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1365),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6224),
                             CreatedById = 1,
                             Description = "Thảo luận về phương pháp, công cụ và kỹ thuật kiểm thử xâm nhập. Chia sẻ kinh nghiệm từ các bài lab thực tế.",
                             DisplayOrder = 1,
@@ -315,7 +318,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 2,
                             Color = "#f0883e",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1370),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6230),
                             CreatedById = 1,
                             Description = "Phân tích malware tĩnh và động, reverse engineering, nghiên cứu virus và các mối đe dọa mới.",
                             DisplayOrder = 2,
@@ -329,7 +332,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 3,
                             Color = "#388bfd",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1373),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6232),
                             CreatedById = 1,
                             Description = "OWASP Top 10, XSS, SQLi, CSRF, LFI/RFI và bảo mật ứng dụng web. Các bài lab và writeup CTF.",
                             DisplayOrder = 3,
@@ -343,7 +346,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 4,
                             Color = "#2ecc71",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1374),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6233),
                             CreatedById = 1,
                             Description = "Tường lửa, IDS/IPS, giám sát mạng, giao thức và phân tích lưu lượng. Công cụ Wireshark, Snort.",
                             DisplayOrder = 4,
@@ -357,7 +360,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 5,
                             Color = "#bc8cff",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1375),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6235),
                             CreatedById = 1,
                             Description = "Mã hóa, hash, PKI, chữ ký số và các giao thức mật mã. Bài toán và thách thức crypto.",
                             DisplayOrder = 5,
@@ -371,7 +374,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 6,
                             Color = "#00e5a0",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1377),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6236),
                             CreatedById = 1,
                             Description = "Trung tâm điều hành bảo mật, phát hiện và ứng phó sự cố, threat hunting và DFIR.",
                             DisplayOrder = 6,
@@ -385,7 +388,7 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 7,
                             Color = "#f39c12",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 610, DateTimeKind.Utc).AddTicks(1378),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6237),
                             CreatedById = 1,
                             Description = "Disassembler, decompiler, phân tích binary, unpacking và patching. Công cụ IDA, Ghidra, x64dbg.",
                             DisplayOrder = 7,
@@ -432,12 +435,6 @@ namespace DOAN_LAPTRINHWEB.Migrations
                     b.Property<bool>("IsEdited")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("PinnedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("PinnedById")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ReplyToId")
                         .HasColumnType("int");
 
@@ -448,44 +445,11 @@ namespace DOAN_LAPTRINHWEB.Migrations
 
                     b.HasIndex("ChatRoomId");
 
-                    b.HasIndex("PinnedById");
-
                     b.HasIndex("ReplyToId");
 
                     b.HasIndex("SenderId");
 
                     b.ToTable("ChatMessages");
-                });
-
-            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatMessageReaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Emoji")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ChatMessageReactions");
                 });
 
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatRoom", b =>
@@ -1139,271 +1103,19 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         {
                             Id = 1,
                             Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 846, DateTimeKind.Utc).AddTicks(9778),
+                            CreatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6432),
                             DisplayName = "Administrator",
                             Email = "admin@cyberforum.local",
                             FailedLoginAttempts = 0,
                             IsActive = true,
                             IsBanned = false,
                             IsEmailVerified = true,
-                            PasswordHash = "$2a$11$pdjde9PtgzqcGb0lSDAYiOuM7Pshj5NWyjNcLNsRVWTSXfGqZWc36",
+                            PasswordHash = "$2a$11$diO5tFMcZxyeaw5ygEV9IeNbhgEXCpAyAKClnctBRmSOSMfFLHSIW",
                             Rank = 5,
                             ReputationPoints = 9999,
                             Role = 2,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 846, DateTimeKind.Utc).AddTicks(9782),
+                            UpdatedAt = new DateTime(2026, 6, 17, 1, 48, 47, 706, DateTimeKind.Utc).AddTicks(6432),
                             Username = "admin"
-                        },
-                        new
-                        {
-                            Id = 101,
-                            Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 846, DateTimeKind.Utc).AddTicks(9954),
-                            DisplayName = "Admin 2",
-                            Email = "admin2@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$pdjde9PtgzqcGb0lSDAYiOuM7Pshj5NWyjNcLNsRVWTSXfGqZWc36",
-                            Rank = 5,
-                            ReputationPoints = 5000,
-                            Role = 2,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 846, DateTimeKind.Utc).AddTicks(9954),
-                            Username = "admin2"
-                        },
-                        new
-                        {
-                            Id = 102,
-                            Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(696),
-                            DisplayName = "Admin 3",
-                            Email = "admin3@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$pdjde9PtgzqcGb0lSDAYiOuM7Pshj5NWyjNcLNsRVWTSXfGqZWc36",
-                            Rank = 5,
-                            ReputationPoints = 5000,
-                            Role = 2,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(696),
-                            Username = "admin3"
-                        },
-                        new
-                        {
-                            Id = 103,
-                            Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(720),
-                            DisplayName = "Admin 4",
-                            Email = "admin4@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$pdjde9PtgzqcGb0lSDAYiOuM7Pshj5NWyjNcLNsRVWTSXfGqZWc36",
-                            Rank = 5,
-                            ReputationPoints = 5000,
-                            Role = 2,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(720),
-                            Username = "admin4"
-                        },
-                        new
-                        {
-                            Id = 104,
-                            Bio = "System Administrator",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(855),
-                            DisplayName = "Admin 5",
-                            Email = "admin5@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$pdjde9PtgzqcGb0lSDAYiOuM7Pshj5NWyjNcLNsRVWTSXfGqZWc36",
-                            Rank = 5,
-                            ReputationPoints = 5000,
-                            Role = 2,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(855),
-                            Username = "admin5"
-                        },
-                        new
-                        {
-                            Id = 201,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(901),
-                            DisplayName = "Member 1",
-                            Email = "user1@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 10,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(901),
-                            Username = "user1"
-                        },
-                        new
-                        {
-                            Id = 202,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(915),
-                            DisplayName = "Member 2",
-                            Email = "user2@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 20,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(915),
-                            Username = "user2"
-                        },
-                        new
-                        {
-                            Id = 203,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(921),
-                            DisplayName = "Member 3",
-                            Email = "user3@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 30,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(922),
-                            Username = "user3"
-                        },
-                        new
-                        {
-                            Id = 204,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(927),
-                            DisplayName = "Member 4",
-                            Email = "user4@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 40,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(927),
-                            Username = "user4"
-                        },
-                        new
-                        {
-                            Id = 205,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(943),
-                            DisplayName = "Member 5",
-                            Email = "user5@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 50,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(943),
-                            Username = "user5"
-                        },
-                        new
-                        {
-                            Id = 206,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(950),
-                            DisplayName = "Member 6",
-                            Email = "user6@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 60,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(950),
-                            Username = "user6"
-                        },
-                        new
-                        {
-                            Id = 207,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(995),
-                            DisplayName = "Member 7",
-                            Email = "user7@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 70,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(995),
-                            Username = "user7"
-                        },
-                        new
-                        {
-                            Id = 208,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1001),
-                            DisplayName = "Member 8",
-                            Email = "user8@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 80,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1002),
-                            Username = "user8"
-                        },
-                        new
-                        {
-                            Id = 209,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1040),
-                            DisplayName = "Member 9",
-                            Email = "user9@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 90,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1040),
-                            Username = "user9"
-                        },
-                        new
-                        {
-                            Id = 210,
-                            Bio = "Cybersecurity Enthusiast",
-                            CreatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1047),
-                            DisplayName = "Member 10",
-                            Email = "user10@cyberforum.local",
-                            FailedLoginAttempts = 0,
-                            IsActive = true,
-                            IsBanned = false,
-                            IsEmailVerified = true,
-                            PasswordHash = "$2a$11$rD1zN2/JlxsqOTTn0qp5vu4Bllhcqy/.dBO094j7h5DKuZTjRDChO",
-                            Rank = 0,
-                            ReputationPoints = 100,
-                            Role = 0,
-                            UpdatedAt = new DateTime(2026, 6, 17, 3, 43, 35, 847, DateTimeKind.Utc).AddTicks(1057),
-                            Username = "user10"
                         });
                 });
 
@@ -1537,10 +1249,6 @@ namespace DOAN_LAPTRINHWEB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "PinnedBy")
-                        .WithMany()
-                        .HasForeignKey("PinnedById");
-
                     b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.ChatMessage", "ReplyTo")
                         .WithMany()
                         .HasForeignKey("ReplyToId")
@@ -1554,30 +1262,9 @@ namespace DOAN_LAPTRINHWEB.Migrations
 
                     b.Navigation("ChatRoom");
 
-                    b.Navigation("PinnedBy");
-
                     b.Navigation("ReplyTo");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatMessageReaction", b =>
-                {
-                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.ChatMessage", "Message")
-                        .WithMany("Reactions")
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DOAN_LAPTRINHWEB.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatRoom", b =>
@@ -1848,11 +1535,6 @@ namespace DOAN_LAPTRINHWEB.Migrations
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.Category", b =>
                 {
                     b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatMessage", b =>
-                {
-                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("DOAN_LAPTRINHWEB.Models.Entities.ChatRoom", b =>

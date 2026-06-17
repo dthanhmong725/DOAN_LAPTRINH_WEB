@@ -277,7 +277,124 @@ public class ChatHub : Hub
         await Clients.OthersInGroup($"room_{roomId}").SendAsync("UserTyping", new
         {
             UserId = userId,
-            Username = user?.Username
+            Username = user?.Username,
+            DisplayName = user?.DisplayName
+        });
+    }
+
+    public async Task ToggleReaction(int messageId, string emoji)
+    {
+        if (string.IsNullOrWhiteSpace(emoji) || emoji.Length > 10)
+        {
+            await Clients.Caller.SendAsync("Error", "Invalid emoji");
+            return;
+        }
+
+        var userId = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var message = await _context.ChatMessages
+            .Include(m => m.Reactions)
+            .FirstOrDefaultAsync(m => m.Id == messageId);
+
+        if (message == null || message.IsDeleted)
+        {
+            await Clients.Caller.SendAsync("Error", "Message not found");
+            return;
+        }
+
+        var existing = message.Reactions.FirstOrDefault(r => r.UserId == userId && r.Emoji == emoji);
+        if (existing != null)
+        {
+            _context.ChatMessageReactions.Remove(existing);
+        }
+        else
+        {
+            _context.ChatMessageReactions.Add(new ChatMessageReaction
+            {
+                MessageId = messageId,
+                UserId = userId,
+                Emoji = emoji,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // Reload with user info
+        message = await _context.ChatMessages
+            .Include(m => m.Reactions).ThenInclude(r => r.User)
+            .FirstAsync(m => m.Id == messageId);
+
+        var reactions = message.Reactions.Select(r => new
+        {
+            UserId = r.UserId,
+            Username = r.User?.Username ?? "",
+            Emoji = r.Emoji,
+            CreatedAt = r.CreatedAt
+        }).ToList();
+
+        await Clients.Group($"room_{message.ChatRoomId}").SendAsync("MessageReaction", new
+        {
+            MessageId = messageId,
+            Reactions = reactions
+        });
+    }
+
+    public async Task TogglePinMessage(int messageId)
+    {
+        var userId = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var message = await _context.ChatMessages.FindAsync(messageId);
+
+        if (message == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Message not found");
+            return;
+        }
+
+        if (message.PinnedAt.HasValue)
+        {
+            message.PinnedAt = null;
+            message.PinnedById = null;
+        }
+        else
+        {
+            // Unpin other messages in same room
+            var others = await _context.ChatMessages
+                .Where(m => m.ChatRoomId == message.ChatRoomId && m.PinnedAt.HasValue)
+                .ToListAsync();
+            foreach (var p in others)
+            {
+                p.PinnedAt = null;
+                p.PinnedById = null;
+            }
+
+            message.PinnedAt = DateTime.UtcNow;
+            message.PinnedById = userId;
+        }
+        await _context.SaveChangesAsync();
+
+        await Clients.Group($"room_{message.ChatRoomId}").SendAsync("MessagePinned", new
+        {
+            MessageId = messageId,
+            PinnedAt = message.PinnedAt,
+            PinnedById = message.PinnedById
+        });
+    }
+
+    public async Task MarkAsRead(int roomId)
+    {
+        var userId = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var membership = await _context.ChatRoomMembers
+            .FirstOrDefaultAsync(crm => crm.ChatRoomId == roomId && crm.UserId == userId);
+        if (membership == null) return;
+
+        membership.LastReadAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await Clients.OthersInGroup($"room_{roomId}").SendAsync("MessageRead", new
+        {
+            UserId = userId,
+            RoomId = roomId,
+            ReadAt = membership.LastReadAt
         });
     }
 

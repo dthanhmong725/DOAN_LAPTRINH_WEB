@@ -155,6 +155,7 @@ const API = {
   users: {
     getById: (id) => api.get(`/users/${id}`),
     getProfile: (username) => api.get(`/users/profile/${username}`),
+    getMe: () => api.get('/users/profile'),
     updateProfile: (data) => api.put('/users/profile', data),
     getUsers: (params) => api.get('/users', params),
     changeRole: (id, role) => api.put(`/users/${id}/role?newRole=${role}`),
@@ -186,6 +187,19 @@ const API = {
     incrementView: (id) => api.post(`/posts/${id}/view`),
     addBookmark: (id) => api.post(`/posts/${id}/bookmark`),
     removeBookmark: (id) => api.delete(`/posts/${id}/bookmark`)
+  },
+
+  upload: {
+    file: (formData) => {
+      return fetch('/api/upload/document', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      }).then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch { return { success: false, message: text || 'Lỗi server' }; }
+      });
+    }
   },
 
   comments: {
@@ -221,7 +235,16 @@ const API = {
     createRoom: (data) => api.post('/chat/rooms', data),
     joinRoom: (roomId) => api.post(`/chat/rooms/${roomId}/join`),
     leaveRoom: (roomId) => api.post(`/chat/rooms/${roomId}/leave`),
-    getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, params)
+    getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, params),
+    sendMessage: (roomId, data) => api.post(`/chat/rooms/${roomId}/messages`, data),
+    editMessage: (roomId, messageId, content) => api.put(`/chat/messages/${messageId}`, { content }),
+    deleteMessage: (roomId, messageId) => api.delete(`/chat/messages/${messageId}`),
+    toggleReaction: (roomId, messageId, emoji) => api.post(`/chat/messages/${messageId}/reactions`, { emoji }),
+    togglePin: (roomId, messageId) => api.post(`/chat/messages/${messageId}/pin`),
+    getPinned: (roomId) => api.get(`/chat/rooms/${roomId}/pinned`),
+    searchMessages: (roomId, q) => api.get(`/chat/rooms/${roomId}/search`, { q }),
+    addMember: (roomId, username) => api.post(`/chat/rooms/${roomId}/members`, { username }),
+    markAsRead: (roomId) => api.post(`/chat/rooms/${roomId}/read`)
   },
 
   admin: {
@@ -242,5 +265,13 @@ const API = {
     getUnreadCount: () => api.get('/notifications/count'),
     markAsRead: (id) => api.put(`/notifications/${id}/read`),
     markAllAsRead: () => api.put('/notifications/read-all')
+  },
+
+  reputation: {
+    getMy: () => api.get('/reputation/me/history'),
+    getUser: (userId) => api.get(`/reputation/user/${userId}`),
+    getUserHistory: (userId, params) => api.get(`/reputation/user/${userId}/history`, params),
+    getLeaderboard: (params) => api.get('/reputation/leaderboard', params),
+    getRules: () => api.get('/reputation/rules')
   }
 };

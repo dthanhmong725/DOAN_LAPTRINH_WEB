@@ -100,4 +100,34 @@ public class ChatMessage
 
     [ForeignKey(nameof(ReplyToId))]
     public virtual ChatMessage? ReplyTo { get; set; }
+
+    public DateTime? PinnedAt { get; set; }
+
+    public int? PinnedById { get; set; }
+
+    [ForeignKey(nameof(PinnedById))]
+    public virtual User? PinnedBy { get; set; }
+
+    public virtual ICollection<ChatMessageReaction> Reactions { get; set; } = new List<ChatMessageReaction>();
+}
+
+public class ChatMessageReaction
+{
+    [Key]
+    public int Id { get; set; }
+
+    public int MessageId { get; set; }
+
+    [ForeignKey(nameof(MessageId))]
+    public virtual ChatMessage Message { get; set; } = null!;
+
+    public int UserId { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public virtual User User { get; set; } = null!;
+
+    [StringLength(10)]
+    public string Emoji { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

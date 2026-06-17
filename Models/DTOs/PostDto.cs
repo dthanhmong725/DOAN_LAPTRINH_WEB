@@ -102,6 +102,8 @@ public class PostListDto
     public string AuthorUsername { get; set; } = string.Empty;
     public string? AuthorAvatar { get; set; }
     public string AuthorRole { get; set; } = "User";
+    public string AuthorRank { get; set; } = "Newbie";
+    public int AuthorReputation { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string CategorySlug { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = new();

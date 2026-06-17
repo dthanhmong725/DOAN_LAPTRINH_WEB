@@ -48,8 +48,18 @@ public class ReputationHistoryDto
 {
     public int Id { get; set; }
     public string Action { get; set; } = string.Empty;
+    public string ActionLabel { get; set; } = string.Empty;
+    public string Icon { get; set; } = "ti-star";
+    public string Color { get; set; } = "#00e5a0";
     public int PointsChange { get; set; }
-    public string? RelatedPostTitle { get; set; }
+    public int TotalPointsAfter { get; set; }
+    public string RankAfter { get; set; } = "Newbie";
+    public int? PostId { get; set; }
+    public string? PostTitle { get; set; }
+    public int? CommentId { get; set; }
+    public int? ActorId { get; set; }
+    public string? ActorName { get; set; }
+    public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -88,10 +98,21 @@ public class ChatMessageDto
     public bool IsDeleted { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? EditedAt { get; set; }
+    public DateTime? PinnedAt { get; set; }
+    public int? PinnedById { get; set; }
     public UserDto Sender { get; set; } = null!;
     public int ChatRoomId { get; set; }
     public int? ReplyToId { get; set; }
     public ChatMessageDto? ReplyTo { get; set; }
+    public List<ReactionDto> Reactions { get; set; } = new();
+}
+
+public class ReactionDto
+{
+    public int UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Emoji { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
 }
 
 public class CreateChatRoomDto
@@ -104,6 +125,7 @@ public class CreateChatRoomDto
     public string? Description { get; set; }
 
     public List<int>? MemberIds { get; set; }
+    public List<string>? MemberUsernames { get; set; }
 }
 
 public class SendMessageDto

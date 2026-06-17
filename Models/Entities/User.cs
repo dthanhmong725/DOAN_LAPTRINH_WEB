@@ -100,6 +100,8 @@ public class User
     public virtual ICollection<SecurityLog> SecurityLogs { get; set; } = new List<SecurityLog>();
     public virtual ICollection<ChatMessage> SentMessages { get; set; } = new List<ChatMessage>();
     public virtual ICollection<ChatRoomMember> ChatRooms { get; set; } = new List<ChatRoomMember>();
+    public virtual ICollection<ReputationHistory> ReputationHistories { get; set; } = new List<ReputationHistory>();
+    public virtual ICollection<ReputationHistory> ReputationHistoriesAsActor { get; set; } = new List<ReputationHistory>();
 }
 
 public class RefreshToken

@@ -29,6 +29,8 @@ public class AppDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<UserUpload> UserUploads => Set<UserUpload>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ReputationHistory> ReputationHistories => Set<ReputationHistory>();
+    public DbSet<ChatMessageReaction> ChatMessageReactions => Set<ChatMessageReaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -255,6 +257,35 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.RecipientId, n.IsRead });
 
+        // ReputationHistory relationships
+        modelBuilder.Entity<ReputationHistory>()
+            .HasOne(rh => rh.User)
+            .WithMany(u => u.ReputationHistories)
+            .HasForeignKey(rh => rh.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReputationHistory>()
+            .HasOne(rh => rh.Actor)
+            .WithMany(u => u.ReputationHistoriesAsActor)
+            .HasForeignKey(rh => rh.ActorId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<ReputationHistory>()
+            .HasOne(rh => rh.Post)
+            .WithMany()
+            .HasForeignKey(rh => rh.PostId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<ReputationHistory>()
+            .HasOne(rh => rh.Comment)
+            .WithMany()
+            .HasForeignKey(rh => rh.CommentId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // Index để query lịch sử nhanh
+        modelBuilder.Entity<ReputationHistory>()
+            .HasIndex(rh => new { rh.UserId, rh.CreatedAt });
+
         // UserUpload -> Post (optional)
         modelBuilder.Entity<UserUpload>()
             .HasOne(u => u.Post)
@@ -290,14 +321,18 @@ public class AppDbContext : DbContext
             new Badge { Id = 10, Name = "Century Club", Description = "Reached 100 reputation points", Icon = "trophy", Color = "#ffc107", Type = "rank", ReputationRequired = 100 }
         );
 
-        // Seed admin user
-        modelBuilder.Entity<User>().HasData(
+        // Seed Users
+        string defaultAdminHash = BCrypt.Net.BCrypt.HashPassword("Admin@123");
+        string defaultUserHash = BCrypt.Net.BCrypt.HashPassword("User@123");
+        
+        var seedUsers = new List<User>
+        {
             new User
             {
                 Id = 1,
                 Username = "admin",
                 Email = "admin@cyberforum.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = defaultAdminHash,
                 DisplayName = "Administrator",
                 Bio = "System Administrator",
                 Role = UserRole.Admin,
@@ -306,6 +341,46 @@ public class AppDbContext : DbContext
                 IsActive = true,
                 IsEmailVerified = true
             }
-        );
+        };
+
+        // Seed 4 more admins (Id: 101 -> 104)
+        for (int i = 1; i <= 4; i++)
+        {
+            seedUsers.Add(new User
+            {
+                Id = i + 100,
+                Username = $"admin{i + 1}",
+                Email = $"admin{i + 1}@cyberforum.local",
+                PasswordHash = defaultAdminHash,
+                DisplayName = $"Admin {i + 1}",
+                Bio = "System Administrator",
+                Role = UserRole.Admin,
+                Rank = UserRank.Elite,
+                ReputationPoints = 5000,
+                IsActive = true,
+                IsEmailVerified = true
+            });
+        }
+
+        // Seed 10 normal users (Id: 201 -> 210)
+        for (int i = 1; i <= 10; i++)
+        {
+            seedUsers.Add(new User
+            {
+                Id = i + 200,
+                Username = $"user{i}",
+                Email = $"user{i}@cyberforum.local",
+                PasswordHash = defaultUserHash,
+                DisplayName = $"Member {i}",
+                Bio = "Cybersecurity Enthusiast",
+                Role = UserRole.User,
+                Rank = UserRank.Newbie,
+                ReputationPoints = 10 * i,
+                IsActive = true,
+                IsEmailVerified = true
+            });
+        }
+
+        modelBuilder.Entity<User>().HasData(seedUsers.ToArray());
     }
 }
