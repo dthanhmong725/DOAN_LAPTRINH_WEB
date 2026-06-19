@@ -102,119 +102,51 @@ public class ChatHub : Hub
         });
     }
 
-    public async Task SendMessage(int roomId, string content, int? replyToId = null)
+    // Thay thế hoàn toàn hàm SendMessage cũ trong ChatHub.cs của bạn bằng đoạn code này:
+    public async Task SendMessage(int roomId, string message, int? replyToId = null)
     {
         var userId = int.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-        // Verify membership and not muted
-        var membership = await _context.ChatRoomMembers
-            .FirstOrDefaultAsync(crm => crm.ChatRoomId == roomId && crm.UserId == userId);
-
-        if (membership == null || membership.IsMuted)
-        {
-            await Clients.Caller.SendAsync("Error", membership?.IsMuted == true ? "You are muted" : "Access denied");
-            return;
-        }
-
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return;
-
-        // Rate limiting for chat (max 1 message per second)
-        var lastMessage = await _context.ChatMessages
-            .Where(m => m.SenderId == userId)
-            .OrderByDescending(m => m.CreatedAt)
-            .FirstOrDefaultAsync();
-
-        if (lastMessage != null && (DateTime.UtcNow - lastMessage.CreatedAt).TotalSeconds < 1)
-        {
-            await Clients.Caller.SendAsync("Error", "Please wait before sending another message");
-            return;
-        }
 
         var room = await _context.ChatRooms.FindAsync(roomId);
         if (room == null || !room.IsActive) return;
 
-        // Handle file attachments (stored as URLs for now)
-        string? attachmentUrl = null;
-        string? attachmentType = null;
+        var isMember = await _context.ChatRoomMembers.AnyAsync(crm => crm.ChatRoomId == roomId && crm.UserId == userId);
+        if (!isMember) return;
 
-        // Check if content is a file URL
-        if (content.StartsWith("[FILE:") && content.Contains("]"))
+        // Tạo đối tượng tin nhắn lưu vào Database
+        var chatMessage = new ChatMessage
         {
-            var fileInfo = content.Substring(7, content.IndexOf("]") - 7).Split('|');
-            if (fileInfo.Length >= 2)
-            {
-                attachmentUrl = fileInfo[0];
-                attachmentType = fileInfo[1];
-                content = content.Substring(content.IndexOf("]") + 1).Trim();
-                if (string.IsNullOrEmpty(content))
-                    content = $"Sent a file: {Path.GetFileName(attachmentUrl)}";
-            }
-        }
-
-        var message = new ChatMessage
-        {
-            Content = content,
-            SenderId = userId,
             ChatRoomId = roomId,
+            SenderId = userId,
+            Content = message, // Nhận chuỗi string trực tiếp từ client gõ vào
             ReplyToId = replyToId,
             CreatedAt = DateTime.UtcNow
         };
 
-        if (!string.IsNullOrEmpty(attachmentUrl))
-        {
-            message.AttachmentUrl = attachmentUrl;
-            message.AttachmentType = attachmentType;
-        }
-
-        _context.ChatMessages.Add(message);
-        await _context.SaveChangesAsync();
-
-        // Update membership last read
-        membership.LastReadAt = DateTime.UtcNow;
-
-        // Update room last activity
+        _context.ChatMessages.Add(chatMessage);
         room.LastActivityAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        var messageDto = new ChatMessageDto
+        // Đồng bộ phát tin nhắn thời gian thực (Real-time) sang cho các tài khoản đang online khác trong phòng
+        await Clients.Group($"room_{roomId}").SendAsync("NewMessage", new
         {
-            Id = message.Id,
-            Content = message.Content,
-            AttachmentUrl = message.AttachmentUrl,
-            AttachmentType = message.AttachmentType,
-            IsEdited = false,
-            IsDeleted = false,
-            CreatedAt = message.CreatedAt,
-            Sender = new UserDto
+            Id = chatMessage.Id,
+            ChatRoomId = chatMessage.ChatRoomId,
+            SenderId = chatMessage.SenderId,
+            Content = chatMessage.Content,
+            ReplyToId = chatMessage.ReplyToId,
+            CreatedAt = chatMessage.CreatedAt,
+            Sender = new
             {
                 Id = user.Id,
                 Username = user.Username,
                 DisplayName = user.DisplayName,
-                AvatarUrl = user.AvatarUrl
-            },
-            ChatRoomId = roomId,
-            ReplyToId = replyToId
-        };
-
-        if (replyToId.HasValue)
-        {
-            var replyTo = await _context.ChatMessages
-                .Include(m => m.Sender)
-                .FirstOrDefaultAsync(m => m.Id == replyToId.Value);
-
-            if (replyTo != null)
-            {
-                messageDto.ReplyTo = new ChatMessageDto
-                {
-                    Id = replyTo.Id,
-                    Content = replyTo.Content,
-                    Sender = new UserDto { Id = replyTo.Sender.Id, Username = replyTo.Sender.Username }
-                };
+                AvatarUrl = user.AvatarUrl,
+                Rank = user.Rank.ToString()
             }
-        }
-
-        await Clients.Group($"room_{roomId}").SendAsync("NewMessage", messageDto);
+        });
     }
 
     public async Task EditMessage(int messageId, string newContent)

@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using DOAN_LAPTRINHWEB.Data;
 using DOAN_LAPTRINHWEB.Interfaces;
 using DOAN_LAPTRINHWEB.Models.DTOs;
+using DOAN_LAPTRINHWEB.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DOAN_LAPTRINHWEB.Controllers;
@@ -12,10 +14,14 @@ namespace DOAN_LAPTRINHWEB.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
+    // BỔ SUNG KHAI BÁO BIẾN _context
+    private readonly AppDbContext _context;
 
-    public ChatController(IChatService chatService)
+    // CẬP NHẬT HÀM KHỞI TẠO ĐỂ INJECT APPDBCONTEXT
+    public ChatController(IChatService chatService, AppDbContext context)
     {
         _chatService = chatService;
+        _context = context; // Gán giá trị để sử dụng được _context
     }
 
     [HttpGet("rooms")]
@@ -188,22 +194,62 @@ public class ChatController : ControllerBase
         var result = await _chatService.MarkAsReadAsync(roomId, userId);
         return Ok(result);
     }
+    // ── TÍNH NĂNG: TỰ ĐỘNG KHỞI TẠO PHÒNG CHAT DIRECT GIỮA 2 USER ──
+    // ── THÊM TÍNH NĂNG: TỰ ĐỘNG KHỞI TẠO PHÒNG CHAT DIRECT GIỮA 2 USER ──
     [HttpPost("rooms/initiate/{targetUserId}")]
     public async Task<IActionResult> InitiateDirectChat(int targetUserId)
     {
         var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 
         if (currentUserId == targetUserId)
-            return BadRequest(new { success = false, message = "Bạn không thể tự trò chuyện với chính mình." });
+            return BadRequest(new { success = false, message = "Bạn không thể tự tạo cuộc trò chuyện với chính mình." });
 
-        // 1. Kiểm tra điều kiện Follow chéo (Hai bên cùng theo dõi nhau)
-        // Để gọi trực tiếp từ Controller, bạn có thể inject AppDbContext vào Controller hoặc viết qua Service. 
-        // Dưới đây là logic xử lý để bạn tham khảo hoặc đưa vào ChatService:
+        // 1. Kiểm tra điều kiện Follow chéo trong Database
+        var isFollowingTarget = await _context.Follows
+            .AnyAsync(f => f.FollowerId == currentUserId && f.FollowingId == targetUserId);
 
-        // Giả định bạn bổ sung hàm xử lý này vào ChatService để gọi:
-        // var result = await _chatService.CreateDirectChatWithFollowCheckAsync(currentUserId, targetUserId);
+        var isTargetFollowingMe = await _context.Follows
+            .AnyAsync(f => f.FollowerId == targetUserId && f.FollowingId == currentUserId);
 
-        return Ok(new { success = true, message = "Đã xác thực kết nối chéo thành công!" });
+        if (!isFollowingTarget || !isTargetFollowingMe)
+        {
+            return BadRequest(new { success = false, message = "Yêu cầu bảo mật: Hai thành viên phải bấm 'Theo dõi' lẫn nhau để kích hoạt phòng chat!" });
+        }
+
+        // 2. Tìm xem trước đó đã có phòng chat Direct nào giữa 2 người này chưa
+        var existingRoom = await _context.ChatRooms
+            .Include(r => r.Members)
+            .Where(r => r.Type == ChatRoomType.Direct && r.IsActive)
+            .FirstOrDefaultAsync(r => r.Members.Any(m => m.UserId == currentUserId) && r.Members.Any(m => m.UserId == targetUserId));
+
+        if (existingRoom != null)
+        {
+            return Ok(new { success = true, chatId = existingRoom.Id, message = "Kết nối đến phòng chat cũ thành công." });
+        }
+
+        // 3. Nếu chưa có, tiến hành tạo mới một ChatRoom dạng Direct
+        var targetUser = await _context.Users.FindAsync(targetUserId);
+        var currentUser = await _context.Users.FindAsync(currentUserId);
+
+        var newRoom = new ChatRoom
+        {
+            Name = $"{currentUser?.DisplayName ?? currentUser?.Username} & {targetUser?.DisplayName ?? targetUser?.Username}",
+            Type = ChatRoomType.Direct,
+            CreatedById = currentUserId,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        _context.ChatRooms.Add(newRoom);
+        await _context.SaveChangesAsync();
+
+        // Thêm 2 User thành thành viên của phòng chat mới tạo
+        _context.ChatRoomMembers.Add(new ChatRoomMember { ChatRoomId = newRoom.Id, UserId = currentUserId, JoinedAt = DateTime.UtcNow });
+        _context.ChatRoomMembers.Add(new ChatRoomMember { ChatRoomId = newRoom.Id, UserId = targetUserId, JoinedAt = DateTime.UtcNow });
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, chatId = newRoom.Id, message = "Thiết lập phòng chat thành công!" });
     }
 }
 
