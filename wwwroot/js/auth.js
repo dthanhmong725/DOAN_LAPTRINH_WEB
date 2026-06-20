@@ -189,6 +189,10 @@ class AuthManager {
           NotificationBell._initialized = false;
           NotificationBell.init();
         }
+        if (typeof MessageBell !== 'undefined') {
+          MessageBell._initialized = false;
+          MessageBell.init();
+        }
         return true;
       }
 
@@ -200,6 +204,10 @@ class AuthManager {
           if (typeof NotificationBell !== 'undefined') {
             NotificationBell._initialized = false;
             NotificationBell.init();
+          }
+          if (typeof MessageBell !== 'undefined') {
+            MessageBell._initialized = false;
+            MessageBell.init();
           }
           return true;
         }

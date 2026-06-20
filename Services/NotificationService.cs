@@ -116,6 +116,7 @@ public class NotificationService : INotificationService
             NotificationType.CommentUpvote   => $"{actorName} đã upvote bình luận của bạn",
             NotificationType.CommentDownvote => $"{actorName} đã downvote bình luận của bạn",
             NotificationType.Mention      => $"{actorName} đã nhắc đến bạn trong một bình luận",
+            NotificationType.Follow       => $"{actorName} đã bắt đầu theo dõi bạn",
             _ => "Bạn có thông báo mới"
         };
 

@@ -234,6 +234,7 @@ const API = {
 
     chat: {
         getRooms: (params) => api.get('/chat/rooms', params),
+        getUnreadCount: () => api.get('/chat/unread-count'),
         getRoom: (roomId) => api.get(`/chat/rooms/${roomId}`),
         createRoom: (data) => api.post('/chat/rooms', data),
         joinRoom: (roomId) => api.post(`/chat/rooms/${roomId}/join`),

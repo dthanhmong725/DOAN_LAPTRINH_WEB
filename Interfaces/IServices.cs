@@ -93,6 +93,7 @@ public interface IChatService
     Task<ApiResponse<bool>> AddMemberAsync(int roomId, int adderUserId, string username);
     Task<ApiResponse<bool>> MarkAsReadAsync(int roomId, int userId);
     Task<ApiResponse<bool>> UpdateLastReadAsync(int roomId, int userId);
+    Task<int> GetTotalUnreadCountAsync(int userId);
 }
 
 public interface IPasswordStrengthService

@@ -24,6 +24,14 @@ public class ChatController : ControllerBase
         _context = context; // Gán giá trị để sử dụng được _context
     }
 
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadCount()
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var count = await _chatService.GetTotalUnreadCountAsync(userId);
+        return Ok(new { success = true, unreadCount = count });
+    }
+
     [HttpGet("rooms")]
     public async Task<IActionResult> GetChatRooms([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {

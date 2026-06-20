@@ -10,7 +10,8 @@ public enum NotificationType
     Comment,
     CommentUpvote,
     CommentDownvote,
-    Mention
+    Mention,
+    Follow
 }
 
 public class Notification

@@ -135,4 +135,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof AuthManager !== 'undefined') {
     AuthManager.updateUI();
   }
+
+  // Khởi tạo chuông thông báo & chuông tin nhắn trên MỌI trang có chứa nút #notificationBtn.
+  // Đặt tập trung ở đây để đồng bộ hành vi, tránh phải lặp lại ở từng trang riêng lẻ.
+  // NotificationBell/MessageBell tự bỏ qua nếu đã init hoặc chưa đăng nhập.
+  if (typeof AuthManager !== 'undefined' && AuthManager.isAuthenticated()) {
+    if (typeof NotificationBell !== 'undefined') {
+      NotificationBell.init();
+    }
+    if (typeof MessageBell !== 'undefined') {
+      MessageBell.init();
+    }
+  }
 });

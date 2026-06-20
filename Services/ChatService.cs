@@ -554,4 +554,22 @@ public class ChatService : IChatService
     {
         return await MarkAsReadAsync(roomId, userId);
     }
+
+    public async Task<int> GetTotalUnreadCountAsync(int userId)
+    {
+        var memberships = await _context.ChatRoomMembers
+            .Include(crm => crm.ChatRoom)
+            .ThenInclude(cr => cr.Messages)
+            .Where(crm => crm.UserId == userId && crm.ChatRoom.IsActive)
+            .ToListAsync();
+
+        var total = 0;
+        foreach (var crm in memberships)
+        {
+            total += crm.ChatRoom.Messages.Count(m => m.SenderId != userId &&
+                (!crm.LastReadAt.HasValue || m.CreatedAt > crm.LastReadAt));
+        }
+
+        return total;
+    }
 }

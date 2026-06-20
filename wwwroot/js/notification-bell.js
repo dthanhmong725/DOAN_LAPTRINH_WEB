@@ -188,7 +188,9 @@ class NotificationBell {
       el.addEventListener('click', () => {
         const id = parseInt(el.dataset.id);
         const postId = el.dataset.postId ? parseInt(el.dataset.postId) : null;
-        this._handleItemClick(id, postId);
+        const username = el.dataset.username || null;
+        const typeKey = el.dataset.type || '';
+        this._handleItemClick(id, postId, username, typeKey);
       });
     });
   }
@@ -201,6 +203,7 @@ class NotificationBell {
       CommentUpvote:   { icon: 'ti-thumb-up',       color: 'var(--accent)',       bg: 'rgba(0, 229, 160, 0.15)' },
       CommentDownvote: { icon: 'ti-thumb-down',     color: 'var(--accent-red)',   bg: 'rgba(255, 90, 95, 0.15)' },
       Mention:         { icon: 'ti-at',             color: 'var(--accent-purple)',bg: 'rgba(188, 140, 255, 0.15)' },
+      Follow:          { icon: 'ti-user-plus',      color: 'var(--accent-blue)',  bg: 'rgba(56, 139, 253, 0.15)' },
     };
 
     const typeKey = n.typeLabel || n.TypeLabel || '';
@@ -218,7 +221,7 @@ class NotificationBell {
       : `<span>${initials}</span>`;
 
     return `
-      <div class="nb-item ${isRead ? '' : 'unread'}" data-id="${n.id || n.Id}" data-post-id="${postId}" role="button" tabindex="0">
+      <div class="nb-item ${isRead ? '' : 'unread'}" data-id="${n.id || n.Id}" data-post-id="${postId}" data-username="${actorName !== '?' ? actorName : ''}" data-type="${typeKey}" role="button" tabindex="0">
         <div class="nb-avatar-wrap">
           <div class="nb-avatar">${avatarHtml}</div>
           <div class="nb-type-icon" style="background:${cfg.bg}; color:${cfg.color};">
@@ -238,7 +241,7 @@ class NotificationBell {
   // ============================================================
   // ACTIONS
   // ============================================================
-  static async _handleItemClick(id, postId) {
+  static async _handleItemClick(id, postId, username, typeKey) {
     const item = document.querySelector(`.nb-item[data-id="${id}"]`);
     if (item && item.classList.contains('unread')) {
       item.classList.remove('unread');
@@ -249,6 +252,9 @@ class NotificationBell {
     if (postId) {
       this._closeDropdown();
       window.location.href = `/post.html?id=${postId}`;
+    } else if (typeKey === 'Follow' && username) {
+      this._closeDropdown();
+      window.location.href = `/profile.html?username=${encodeURIComponent(username)}`;
     }
   }
 

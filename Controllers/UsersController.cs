@@ -17,12 +17,14 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IRoleService _roleService;
     private readonly AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public UsersController(IUserService userService, IRoleService roleService, AppDbContext context)
+    public UsersController(IUserService userService, IRoleService roleService, AppDbContext context, INotificationService notificationService)
     {
         _userService = userService;
         _roleService = roleService;
         _context = context;
+        _notificationService = notificationService;
     }
 
     [HttpGet("{id}")]
@@ -77,6 +79,11 @@ public class UsersController : ControllerBase
 
         await _context.SaveChangesAsync();
         var isMutual = dynamicStatus && await _context.Follows.AnyAsync(f => f.FollowerId == targetUserId && f.FollowingId == currentUserId);
+
+        if (dynamicStatus)
+        {
+            await _notificationService.CreateAsync(targetUserId, currentUserId, NotificationType.Follow);
+        }
 
         return Ok(new
         {
