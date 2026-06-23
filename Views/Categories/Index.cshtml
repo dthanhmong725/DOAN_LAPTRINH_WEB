@@ -1,0 +1,49 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Danh mục - CyberForum";
+}
+
+<section>
+    <h1 style="font-size:1.75rem; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-category" style="color:var(--accent);"></i> Danh mục
+    </h1>
+    <p class="text-muted" style="margin-bottom:28px;">Khám phá các chủ đề an ninh mạng</p>
+
+    <div id="categoriesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px;">
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const r = await API.categories.getAll();
+                if (r.success) renderCategories(r.data);
+            } catch (e) { console.error(e); }
+        });
+
+        function renderCategories(cats) {
+            document.getElementById('categoriesGrid').innerHTML = cats.map(cat => {
+                const icon = cat.icon.startsWith('ti-') ? cat.icon : 'ti-' + cat.icon;
+                return `<a href="/categories/${cat.slug}" class="card" style="text-decoration:none; color:inherit; padding:20px; border-radius:var(--radius-md); transition:transform 0.2s, box-shadow 0.2s; cursor:pointer;"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+                            onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <div style="width:48px; height:48px; border-radius:var(--radius-md); background:${cat.color}18; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="ti ${icon}" style="color:${cat.color}; font-size:1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size:1rem; margin-bottom:2px;">${cat.name}</h3>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">${cat.postCount} bài viết</span>
+                        </div>
+                    </div>
+                    ${cat.description ? `<p style="font-size:0.8125rem; color:var(--text-muted); line-height:1.5; margin:0;">${cat.description}</p>` : ''}
+                </a>`;
+            }).join('');
+        }
+    </script>
+}

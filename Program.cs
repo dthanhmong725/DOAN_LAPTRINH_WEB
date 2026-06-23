@@ -56,7 +56,7 @@ builder.Services.AddAuthentication(options =>
             {
                 context.Token = authHeader.Substring("Bearer ".Length).Trim();
             }
-            // Priority 2: Cookie (fallback)
+            // Priority 2: Cookie access_token (used by MVC Razor Views)
             else if (context.Request.Cookies.TryGetValue("access_token", out var cookieToken))
             {
                 context.Token = cookieToken;
@@ -78,6 +78,19 @@ builder.Services.AddAuthentication(options =>
             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
             {
                 context.Response.Headers["Token-Expired"] = "true";
+            }
+            return Task.CompletedTask;
+        },
+        // For MVC routes: redirect to login instead of returning 401
+        OnChallenge = context =>
+        {
+            var path = context.Request.Path;
+            var isApiOrHub = path.StartsWithSegments("/api") || path.StartsWithSegments("/hubs");
+            if (!isApiOrHub && !context.Response.HasStarted)
+            {
+                context.HandleResponse();
+                var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
+                context.Response.Redirect($"/auth/login?returnUrl={returnUrl}");
             }
             return Task.CompletedTask;
         }
@@ -191,17 +204,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Controllers
-builder.Services.AddControllers()
+// Controllers (MVC + API)
+builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
-// Thay thế hoặc chèn thêm ngay dưới nó đoạn cấu hình Route chuẩn hóa này:
 builder.Services.Configure<RouteOptions>(options =>
 {
-    options.LowercaseUrls = true; // Ép mọi API viết thường (/api/users/ thay vì /api/Users/)
+    options.LowercaseUrls = true;
 });
 
 builder.Services.AddRazorPages();
@@ -243,7 +255,6 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseCors("AllowFrontend");
@@ -256,6 +267,11 @@ app.UseRequestLogging();
 
 app.MapControllers();
 app.MapRazorPages();
+
+// MVC Convention Route
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // SignalR hub
 app.MapHub<ChatHub>("/hubs/chat");

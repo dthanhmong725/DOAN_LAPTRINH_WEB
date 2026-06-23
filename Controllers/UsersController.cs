@@ -27,6 +27,23 @@ public class UsersController : ControllerBase
         _notificationService = notificationService;
     }
 
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SearchUsers([FromQuery] string q, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return Ok(new PaginatedResponse<PublicProfileDto> { Success = true, Data = new List<PublicProfileDto>(), Page = page, PageSize = pageSize, TotalItems = 0 });
+
+        int? currentUserId = null;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        }
+
+        var result = await _userService.GetUsersAsync(page, pageSize, q, null, currentUserId);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetById(int id)

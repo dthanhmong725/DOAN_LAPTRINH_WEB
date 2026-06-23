@@ -225,7 +225,7 @@ const RoleGuard = {
       if (typeof router !== 'undefined') {
         router.navigate('/login');
       } else {
-        window.location.href = '/login.html';
+        window.location.href = '/auth/login';
       }
       return false;
     }

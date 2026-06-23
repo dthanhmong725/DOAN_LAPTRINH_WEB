@@ -78,8 +78,25 @@
         <p id="resultSummary" style="color: var(--text-muted); font-size: 0.875rem; margin: 0;"></p>
       </div>
 
+      <!-- Users section -->
+      <div id="usersSection" style="display: none; margin-bottom: 24px;">
+        <h2 style="font-size: 1rem; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+          <i class="ti ti-users" style="color: var(--text-muted);"></i>
+          Người dùng
+        </h2>
+        <div id="usersList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <button id="showMoreUsersBtn" class="btn btn-ghost" style="display: none; margin-top: 8px; width: 100%; font-size: 0.8125rem;">
+          Xem thêm người dùng <i class="ti ti-chevron-down"></i>
+        </button>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); margin-bottom: 20px;"></div>
+
       <!-- Filter bar -->
       <div class="d-flex justify-between align-center mb-4" style="margin-bottom: 16px;">
+        <div class="d-flex gap-2 align-center">
+          <h2 style="font-size: 1rem; margin: 0;">Bài viết</h2>
+        </div>
         <div class="d-flex gap-2 align-center">
           <select id="sortSelect" class="form-select" style="width: auto; padding: 6px 12px;">
             <option value="">Mới nhất</option>
@@ -118,8 +135,106 @@
 
       document.getElementById('globalSearch').value = query;
 
-      await loadPosts(1);
+      await Promise.all([loadPosts(1), loadUsers()]);
       setupEventListeners();
+    }
+
+    let allUsersResult = [];
+    let showAllUsers = false;
+
+    async function loadUsers() {
+      const section = document.getElementById('usersSection');
+      const list = document.getElementById('usersList');
+      const showMoreBtn = document.getElementById('showMoreUsersBtn');
+
+      if (!query.trim()) {
+        section.style.display = 'none';
+        return;
+      }
+
+      try {
+        const result = await API.users.searchUsers({ q: query, page: 1, pageSize: 20 });
+        if (!result.success || !result.data || !result.data.length) {
+          section.style.display = 'none';
+          return;
+        }
+
+        allUsersResult = result.data;
+        showAllUsers = false;
+        section.style.display = 'block';
+        renderUsersList();
+
+        showMoreBtn.style.display = allUsersResult.length > 3 ? 'block' : 'none';
+        showMoreBtn.onclick = () => {
+          showAllUsers = true;
+          renderUsersList();
+          showMoreBtn.style.display = 'none';
+        };
+      } catch (e) {
+        section.style.display = 'none';
+      }
+    }
+
+    function renderUsersList() {
+      const list = document.getElementById('usersList');
+      const visibleUsers = showAllUsers ? allUsersResult : allUsersResult.slice(0, 3);
+      list.innerHTML = visibleUsers.map(u => renderUserCard(u)).join('');
+    }
+
+    function renderUserCard(user) {
+      const isOwn = AuthManager.getUser && AuthManager.getUser()?.id === user.id;
+      const followBtnHtml = isOwn ? '' : `
+        <button class="btn ${user.isFollowing ? 'btn-ghost' : 'btn-primary'} follow-btn"
+          data-user-id="${user.id}"
+          data-following="${user.isFollowing ? 'true' : 'false'}"
+          onclick="toggleFollow(${user.id}, this)"
+          style="font-size: 0.8125rem; padding: 6px 14px; white-space: nowrap;">
+          ${user.isFollowing ? '<i class="ti ti-check"></i> Đang theo dõi' : '<i class="ti ti-plus"></i> Theo dõi'}
+        </button>`;
+
+      return `
+        <div class="card" style="padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+          <a href="/profile.html?username=${user.username}" style="flex-shrink: 0;">
+            <div class="avatar avatar-md">${(user.displayName || user.username).charAt(0).toUpperCase()}</div>
+          </a>
+          <div style="flex: 1; min-width: 0;">
+            <a href="/profile.html?username=${user.username}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <span style="font-weight: 600; font-size: 0.9375rem;">${user.displayName || user.username}</span>
+              ${RoleGuard.renderRoleBadge ? RoleGuard.renderRoleBadge(user.role) : ''}
+            </a>
+            <div style="color: var(--text-muted); font-size: 0.8125rem;">
+              @${user.username} · ${user.reputationPoints} điểm · ${user.postCount} bài viết
+            </div>
+          </div>
+          ${followBtnHtml}
+        </div>`;
+    }
+
+    async function toggleFollow(userId, btn) {
+      if (!AuthManager.isAuthenticated()) {
+        Toast.show('Vui lòng đăng nhập để theo dõi người dùng', 'warning');
+        return;
+      }
+      const wasFollowing = btn.dataset.following === 'true';
+      btn.disabled = true;
+      try {
+        const result = await API.users.toggleFollow(userId);
+        const nowFollowing = result.isFollowing;
+        btn.dataset.following = nowFollowing ? 'true' : 'false';
+        btn.className = `btn ${nowFollowing ? 'btn-ghost' : 'btn-primary'} follow-btn`;
+        btn.innerHTML = nowFollowing
+          ? '<i class="ti ti-check"></i> Đang theo dõi'
+          : '<i class="ti ti-plus"></i> Theo dõi';
+
+        const userInArray = allUsersResult.find(u => u.id === userId);
+        if (userInArray) userInArray.isFollowing = nowFollowing;
+
+        Toast.show(result.message || (nowFollowing ? 'Đã theo dõi' : 'Đã hủy theo dõi'), 'success');
+      } catch (e) {
+        Toast.show(e.message || 'Có lỗi xảy ra', 'error');
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function loadPosts(page = 1) {

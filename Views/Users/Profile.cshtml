@@ -1,0 +1,121 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Hồ sơ - CyberForum";
+    var profileUsername = ViewData["ProfileUsername"]?.ToString();
+    var currentUsername = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+    var isOwnProfile = string.IsNullOrEmpty(profileUsername) || profileUsername == currentUsername;
+}
+
+<div id="profileContent">
+    @* Skeleton loading *@
+    <div class="card mb-4" style="position:relative; overflow:hidden;">
+        <div class="skeleton" style="height:180px; border-radius:0; margin-bottom:0;"></div>
+        <div style="padding:20px; display:flex; align-items:flex-start; gap:16px; margin-top:-40px; position:relative;">
+            <div class="skeleton" style="width:80px; height:80px; border-radius:50%; flex-shrink:0;"></div>
+            <div style="flex:1; padding-top:44px;">
+                <div class="skeleton" style="height:24px; width:200px; margin-bottom:8px;"></div>
+                <div class="skeleton" style="height:16px; width:300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        var isAuth = User.Identity!.IsAuthenticated;
+        var curUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+    }
+    <script>
+        const _profileUsername = '@Html.Raw(profileUsername ?? currentUsername ?? "")';
+        const _currentUsername = '@Html.Raw(currentUsername ?? "")';
+        const _isAuthenticated = @(isAuth ? "true" : "false");
+        const _currentUserId = parseInt('@Html.Raw(curUserId)') || 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!_profileUsername) { window.location.href = '/'; return; }
+            await loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const r = await API.users.getProfile(_profileUsername);
+                if (!r.success) { document.getElementById('profileContent').innerHTML = `<div class="empty-state"><i class="ti ti-user-x"></i><h3>Không tìm thấy người dùng</h3></div>`; return; }
+                const u = r.data;
+                const isOwn = u.username === _currentUsername;
+                document.title = `${u.displayName||u.username} - CyberForum`;
+
+                document.getElementById('profileContent').innerHTML = `
+                    <div class="card mb-4" style="overflow:hidden;">
+                        <div style="height:180px; background:linear-gradient(135deg, var(--accent)22 0%, var(--bg-surface2) 100%); ${u.coverPhotoUrl?`background-image:url('${u.coverPhotoUrl}'); background-size:cover; background-position:center;`:''} position:relative;">
+                        </div>
+                        <div style="padding:20px; display:flex; align-items:flex-start; gap:16px; margin-top:-48px; position:relative;">
+                            <div style="width:80px; height:80px; border-radius:50%; background:var(--accent)33; border:3px solid var(--bg-primary); display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; color:var(--accent); flex-shrink:0; overflow:hidden;">
+                                ${u.avatarUrl ? `<img src="${u.avatarUrl}" alt="" style="width:100%; height:100%; object-fit:cover;">` : (u.displayName||u.username).charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex:1; padding-top:52px;">
+                                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    <h1 style="font-size:1.375rem; margin:0;">${u.displayName||u.username}</h1>
+                                    <span class="rank-badge rank-${u.rank.toLowerCase()}">${u.rank}</span>
+                                    ${u.role!=='User'?`<span class="badge badge-${u.role.toLowerCase()}" style="font-size:0.7rem;">${u.role}</span>`:''}
+                                </div>
+                                <p style="color:var(--text-muted); font-size:0.875rem; margin:4px 0 12px;">@@${u.username}</p>
+                                ${u.bio?`<p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:12px;">${u.bio}</p>`:''}
+                                <div style="display:flex; gap:20px; font-size:0.8125rem; color:var(--text-muted); flex-wrap:wrap;">
+                                    <span><i class="ti ti-star" style="color:var(--accent);"></i> ${u.reputationPoints} uy tín</span>
+                                    <span><i class="ti ti-article"></i> ${u.postCount} bài viết</span>
+                                    <span><i class="ti ti-message"></i> ${u.commentCount} bình luận</span>
+                                    <span><i class="ti ti-calendar"></i> Tham gia ${new Date(u.createdAt).toLocaleDateString('vi-VN',{month:'long',year:'numeric'})}</span>
+                                </div>
+                            </div>
+                            <div style="padding-top:52px; display:flex; gap:8px; flex-shrink:0;">
+                                ${isOwn ? `<a href="/users/settings" class="btn btn-secondary btn-sm"><i class="ti ti-settings"></i> Cài đặt</a>`
+                                        : `${_isAuthenticated ? `<button class="btn btn-primary btn-sm" onclick="toggleFollow('${u.username}', ${u.id})" id="followBtn">${u.isFollowing?'Đang theo dõi':'Theo dõi'}</button>` : ''}`}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${u.badges&&u.badges.length?`<div class="card mb-4" style="padding:16px;">
+                        <h3 style="font-size:0.9375rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="ti ti-medal" style="color:var(--accent);"></i> Huy hiệu (${u.badges.length})</h3>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            ${u.badges.map(b=>`<div style="padding:6px 12px; background:var(--bg-surface2); border-radius:var(--radius-md); font-size:0.8rem; display:flex; align-items:center; gap:6px;" title="${b.description||''}">
+                                <span>${b.icon||'🏅'}</span> ${b.name}
+                            </div>`).join('')}
+                        </div>
+                    </div>`:''}
+
+                    <div id="userPosts">
+                        <h3 style="font-size:0.9375rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="ti ti-article" style="color:var(--accent);"></i> Bài viết gần đây</h3>
+                        <div id="userPostsList"><div class="skeleton" style="height:80px; margin-bottom:8px;"></div><div class="skeleton" style="height:80px;"></div></div>
+                    </div>`;
+
+                await loadUserPosts(u.username);
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadUserPosts(username) {
+            try {
+                const r = await API.posts.getAll({ page: 1, pageSize: 5, username });
+                const c = document.getElementById('userPostsList');
+                if (!r.data || !r.data.length) { c.innerHTML = '<p class="text-muted">Chưa có bài viết nào.</p>'; return; }
+                c.innerHTML = r.data.map(p=>`<a href="/posts/${p.id}" class="card mb-2" style="display:block; padding:12px; text-decoration:none; color:inherit;">
+                    <div style="font-weight:500; margin-bottom:4px;">${p.title}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); display:flex; gap:12px;">
+                        <span><i class="ti ti-eye"></i> ${p.viewCount}</span>
+                        <span><i class="ti ti-message"></i> ${p.commentCount}</span>
+                        <span><i class="ti ti-clock"></i> ${new Date(p.createdAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                </a>`).join('');
+            } catch (e) {}
+        }
+
+        async function toggleFollow(username, userId) {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập', 'warning'); return; }
+            try {
+                const r = await API.users.follow(userId);
+                const btn = document.getElementById('followBtn');
+                if (btn) btn.textContent = r.data ? 'Đang theo dõi' : 'Theo dõi';
+                Toast.show(r.data ? 'Đã theo dõi' : 'Đã bỏ theo dõi', 'success');
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+    </script>
+}

@@ -1,0 +1,34 @@
+@model VerifyEmailViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Xác thực Email";
+}
+
+<div style="width:100%; max-width:400px; padding:24px;">
+    <div class="text-center mb-4">
+        <a href="/" style="color:var(--accent); text-decoration:none;">
+            <img src="/logo2-Photoroom.png" alt="CyberForum" style="height:40px; width:auto;">
+        </a>
+    </div>
+
+    <div class="card text-center" style="padding:40px 24px;">
+        @if (Model.IsSuccess)
+        {
+            <i class="ti ti-circle-check" style="font-size:3rem; color:var(--accent); margin-bottom:16px;"></i>
+            <h2 style="font-size:1.25rem; margin-bottom:12px;">Email đã được xác thực!</h2>
+            <p class="text-muted" style="font-size:0.875rem; margin-bottom:20px;">
+                Tài khoản của bạn đã được kích hoạt thành công. Hãy đăng nhập để bắt đầu.
+            </p>
+            <a href="/auth/login" class="btn btn-primary w-100">Đăng nhập ngay</a>
+        }
+        else
+        {
+            <i class="ti ti-circle-x" style="font-size:3rem; color:var(--accent-red); margin-bottom:16px;"></i>
+            <h2 style="font-size:1.25rem; margin-bottom:12px;">Xác thực thất bại</h2>
+            <p class="text-muted" style="font-size:0.875rem; margin-bottom:20px;">
+                @(Model.ErrorMessage ?? "Token xác thực không hợp lệ hoặc đã hết hạn.")
+            </p>
+            <a href="/auth/login" class="btn btn-secondary w-100">Quay lại đăng nhập</a>
+        }
+    </div>
+</div>

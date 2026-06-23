@@ -1,0 +1,43 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Huy hiệu - CyberForum";
+}
+
+<section>
+    <h1 style="font-size:1.75rem; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-medal" style="color:var(--accent);"></i> Huy hiệu
+    </h1>
+    <p class="text-muted" style="margin-bottom:28px;">Danh sách huy hiệu có thể đạt được trong CyberForum</p>
+
+    <div id="badgesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px;">
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:120px; border-radius:var(--radius-md);"></div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const r = await API.badges.getAll();
+                if (r.success) renderBadges(r.data);
+            } catch (e) { console.error(e); }
+        });
+
+        function renderBadges(badges) {
+            const c = document.getElementById('badgesGrid');
+            c.innerHTML = badges.map(b => `
+                <div class="card" style="padding:20px; text-align:center; ${b.isEarned?'border:1px solid var(--accent)44; background:var(--accent)08;':'opacity:0.7;'}">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">${b.icon || '🏅'}</div>
+                    <h3 style="font-size:0.9375rem; margin-bottom:6px; color:${b.isEarned?'var(--accent)':'var(--text-primary)'};">${b.name}</h3>
+                    <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4; margin-bottom:8px;">${b.description||''}</p>
+                    ${b.isEarned?`<span style="font-size:0.75rem; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:4px;"><i class="ti ti-circle-check-filled"></i> Đã đạt được</span>`:
+                    `<span style="font-size:0.75rem; color:var(--text-muted);"><i class="ti ti-lock"></i> Chưa đạt được</span>`}
+                </div>`).join('');
+        }
+    </script>
+}

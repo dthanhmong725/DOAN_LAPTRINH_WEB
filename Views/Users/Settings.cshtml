@@ -1,0 +1,163 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Cài đặt - CyberForum";
+    var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+}
+
+<div style="max-width:700px; margin:0 auto;">
+    <h1 style="font-size:1.5rem; margin-bottom:24px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-settings" style="color:var(--accent);"></i> Cài đặt tài khoản
+    </h1>
+
+    @* Tabs *@
+    <div style="display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:24px;">
+        <button class="settings-tab active" data-tab="profile" onclick="switchTab('profile')">
+            <i class="ti ti-user"></i> Hồ sơ
+        </button>
+        <button class="settings-tab" data-tab="security" onclick="switchTab('security')">
+            <i class="ti ti-lock"></i> Bảo mật
+        </button>
+        <button class="settings-tab" data-tab="appearance" onclick="switchTab('appearance')">
+            <i class="ti ti-palette"></i> Giao diện
+        </button>
+    </div>
+
+    @* Profile Tab *@
+    <div id="tab-profile" class="settings-panel">
+        <div class="card" style="padding:24px; margin-bottom:16px;">
+            <h3 style="font-size:1rem; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <i class="ti ti-user-circle" style="color:var(--accent);"></i> Thông tin cá nhân
+            </h3>
+            <div class="form-group">
+                <label class="form-label">Tên hiển thị</label>
+                <input type="text" class="form-input" id="displayName" placeholder="Nhập tên hiển thị" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Giới thiệu bản thân</label>
+                <textarea class="form-input" id="bio" rows="3" placeholder="Viết vài dòng về bạn..." maxlength="1000" style="resize:vertical;"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL Avatar</label>
+                <input type="url" class="form-input" id="avatarUrl" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL Ảnh bìa</label>
+                <input type="url" class="form-input" id="coverPhotoUrl" placeholder="https://...">
+            </div>
+            <button class="btn btn-primary" onclick="saveProfile()">
+                <i class="ti ti-check"></i> Lưu thay đổi
+            </button>
+        </div>
+    </div>
+
+    @* Security Tab *@
+    <div id="tab-security" class="settings-panel" style="display:none;">
+        <div class="card" style="padding:24px; margin-bottom:16px;">
+            <h3 style="font-size:1rem; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <i class="ti ti-lock" style="color:var(--accent);"></i> Đổi mật khẩu
+            </h3>
+            <a href="/auth/change-password" class="btn btn-secondary">
+                <i class="ti ti-key"></i> Đi đến trang đổi mật khẩu
+            </a>
+        </div>
+
+        <div class="card" style="padding:24px;">
+            <h3 style="font-size:1rem; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                <i class="ti ti-shield-lock" style="color:var(--accent);"></i> Nhật ký bảo mật
+            </h3>
+            <a href="/security/logs" class="btn btn-secondary">
+                <i class="ti ti-list"></i> Xem nhật ký đăng nhập
+            </a>
+        </div>
+    </div>
+
+    @* Appearance Tab *@
+    <div id="tab-appearance" class="settings-panel" style="display:none;">
+        <div class="card" style="padding:24px;">
+            <h3 style="font-size:1rem; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                <i class="ti ti-palette" style="color:var(--accent);"></i> Giao diện
+            </h3>
+            <div class="form-group">
+                <label class="form-label">Chủ đề màu sắc</label>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;" id="themeOptions">
+                    <button class="theme-btn active" data-theme="cyber" onclick="setTheme('cyber')" style="padding:10px 20px; border-radius:var(--radius-md); background:var(--accent); color:#fff; border:none; cursor:pointer; font-size:0.875rem;">
+                        <i class="ti ti-cpu"></i> Cyber (Mặc định)
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cỡ chữ</label>
+                <select class="form-select" id="fontSizeSelect" style="width:auto;" onchange="setFontSize(this.value)">
+                    <option value="14">Nhỏ (14px)</option>
+                    <option value="16" selected>Bình thường (16px)</option>
+                    <option value="18">Lớn (18px)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .settings-tab {
+        padding: 8px 16px;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s;
+    }
+    .settings-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+    .settings-tab:hover { color: var(--text-primary); }
+</style>
+
+@section Scripts {
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const r = await API.users.getProfile('@Html.Raw(username)');
+                if (r.success) {
+                    const u = r.data;
+                    document.getElementById('displayName').value = u.displayName || '';
+                    document.getElementById('bio').value = u.bio || '';
+                    document.getElementById('avatarUrl').value = u.avatarUrl || '';
+                    document.getElementById('coverPhotoUrl').value = u.coverPhotoUrl || '';
+                }
+            } catch (e) { console.warn(e); }
+        });
+
+        async function saveProfile() {
+            const data = {
+                displayName: document.getElementById('displayName').value.trim() || null,
+                bio: document.getElementById('bio').value.trim() || null,
+                avatarUrl: document.getElementById('avatarUrl').value.trim() || null,
+                coverPhotoUrl: document.getElementById('coverPhotoUrl').value.trim() || null
+            };
+            try {
+                const r = await API.users.updateProfile(data);
+                if (r.success) Toast.show('Đã lưu thay đổi!', 'success');
+                else Toast.show(r.message || 'Không thể lưu', 'error');
+            } catch (e) { Toast.show(e.message || 'Có lỗi xảy ra', 'error'); }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.fontSize = size + 'px';
+            localStorage.setItem('cf_font_size', size);
+        }
+    </script>
+}

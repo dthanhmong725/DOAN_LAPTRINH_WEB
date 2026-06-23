@@ -125,6 +125,7 @@ public class PublicProfileDto
     public int CommentCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<BadgeDto> Badges { get; set; } = new();
+    public bool? IsFollowing { get; set; }
 }
 
 public class UpdateProfileDto

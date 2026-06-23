@@ -251,10 +251,10 @@ class NotificationBell {
     }
     if (postId) {
       this._closeDropdown();
-      window.location.href = `/post.html?id=${postId}`;
+      window.location.href = `/posts/${postId}`;
     } else if (typeKey === 'Follow' && username) {
       this._closeDropdown();
-      window.location.href = `/profile.html?username=${encodeURIComponent(username)}`;
+      window.location.href = `/users/profile?username=${encodeURIComponent(username)}`;
     }
   }
 

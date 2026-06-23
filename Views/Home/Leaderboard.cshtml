@@ -1,0 +1,105 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Bảng xếp hạng - CyberForum";
+}
+
+<section>
+    <h1 style="font-size:1.75rem; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-trophy" style="color:var(--accent);"></i> Bảng xếp hạng
+    </h1>
+    <p class="text-muted" style="margin-bottom:24px;">Top thành viên đóng góp nhiều nhất cho cộng đồng CyberForum</p>
+
+    <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-primary btn-sm period-btn active" data-period="all-time" onclick="setPeriod('all-time', this)">Mọi thời gian</button>
+        <button class="btn btn-secondary btn-sm period-btn" data-period="monthly" onclick="setPeriod('monthly', this)">Tháng này</button>
+        <button class="btn btn-secondary btn-sm period-btn" data-period="weekly" onclick="setPeriod('weekly', this)">Tuần này</button>
+    </div>
+
+    @* Top 3 *@
+    <div id="top3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:32px;">
+        <div class="skeleton" style="height:160px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:180px; border-radius:var(--radius-md);"></div>
+        <div class="skeleton" style="height:160px; border-radius:var(--radius-md);"></div>
+    </div>
+
+    @* Full list *@
+    <div class="card" style="overflow:hidden;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <th style="padding:12px 16px; text-align:left; color:var(--text-muted); font-size:0.8rem; font-weight:600;">#</th>
+                    <th style="padding:12px 16px; text-align:left; color:var(--text-muted); font-size:0.8rem; font-weight:600;">Thành viên</th>
+                    <th style="padding:12px 16px; text-align:right; color:var(--text-muted); font-size:0.8rem; font-weight:600;">Uy tín</th>
+                    <th style="padding:12px 16px; text-align:right; color:var(--text-muted); font-size:0.8rem; font-weight:600;">Bài viết</th>
+                    <th style="padding:12px 16px; text-align:right; color:var(--text-muted); font-size:0.8rem; font-weight:600;">Hạng</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+                <tr><td colspan="5" style="padding:24px; text-align:center;"><div class="skeleton" style="height:40px;"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        let currentPeriod = 'all-time';
+
+        document.addEventListener('DOMContentLoaded', () => loadLeaderboard());
+
+        async function loadLeaderboard() {
+            try {
+                const r = await API.users.getLeaderboard({ period: currentPeriod, pageSize: 20 });
+                if (r.success) { renderTop3(r.data.slice(0, 3)); renderTable(r.data); }
+            } catch (e) { console.error(e); }
+        }
+
+        function setPeriod(period, btn) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(b => b.className = 'btn btn-secondary btn-sm period-btn');
+            btn.className = 'btn btn-primary btn-sm period-btn active';
+            loadLeaderboard();
+        }
+
+        function renderTop3(users) {
+            const c = document.getElementById('top3');
+            const order = [users[1], users[0], users[2]]; // 2nd, 1st, 3rd
+            const medals = ['🥈', '🥇', '🥉'];
+            const heights = ['160px', '200px', '160px'];
+            const colors = ['#94a3b8', '#f59e0b', '#cd7c3f'];
+
+            c.innerHTML = order.map((u, i) => {
+                if (!u) return '<div></div>';
+                const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
+                return `<div class="card" style="padding:20px; text-align:center; border:1px solid ${colors[i]}44; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:${heights[i]}; position:relative;">
+                    <div style="font-size:2rem; margin-bottom:8px;">${medals[i]}</div>
+                    <div style="width:48px; height:48px; border-radius:50%; background:${colors[i]}22; border:2px solid ${colors[i]}; display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:bold; color:${colors[i]}; margin-bottom:8px;">
+                        ${(u.displayName||u.username).charAt(0).toUpperCase()}
+                    </div>
+                    <a href="/users/profile?username=${u.username}" style="font-weight:600; color:var(--text-primary); text-decoration:none; margin-bottom:4px;">${u.displayName||u.username}</a>
+                    <span class="rank-badge rank-${u.rank.toLowerCase()}" style="font-size:0.7rem; margin-bottom:8px;">${u.rank}</span>
+                    <div style="font-size:0.875rem; color:var(--accent); font-weight:700;">${u.reputationPoints.toLocaleString('vi-VN')} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">uy tín</span></div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderTable(users) {
+            document.getElementById('leaderboardBody').innerHTML = users.map((u, i) => `
+                <tr style="border-bottom:1px solid var(--border); transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                    <td style="padding:12px 16px; font-weight:600; color:${i<3?'var(--accent)':'var(--text-muted)'}; width:48px;">${i+1}</td>
+                    <td style="padding:12px 16px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:var(--accent)22; display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); font-size:0.9rem; flex-shrink:0;">${(u.displayName||u.username).charAt(0).toUpperCase()}</div>
+                            <div>
+                                <a href="/users/profile?username=${u.username}" style="color:var(--text-primary); text-decoration:none; font-weight:500;">${u.displayName||u.username}</a>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">@@${u.username}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding:12px 16px; text-align:right; font-weight:600; color:var(--accent);">${u.reputationPoints.toLocaleString('vi-VN')}</td>
+                    <td style="padding:12px 16px; text-align:right; color:var(--text-secondary);">${u.postCount||0}</td>
+                    <td style="padding:12px 16px; text-align:right;"><span class="rank-badge rank-${u.rank.toLowerCase()}" style="font-size:0.75rem;">${u.rank}</span></td>
+                </tr>`).join('');
+        }
+    </script>
+}

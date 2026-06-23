@@ -1,0 +1,126 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Nhật ký bảo mật - CyberForum";
+    var currentUsername = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+}
+
+<section>
+    <h1 style="font-size:1.5rem; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-shield-lock" style="color:var(--accent);"></i> Nhật ký bảo mật
+    </h1>
+    <p class="text-muted" style="margin-bottom:24px;">Lịch sử đăng nhập và hoạt động bảo mật của tài khoản</p>
+
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size:0.9375rem; margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="ti ti-list"></i> Lịch sử hoạt động
+            </h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadLogs()">
+                <i class="ti ti-refresh"></i> Tải lại
+            </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <th style="padding:10px 16px; text-align:left; color:var(--text-muted); font-weight:600;">Thời gian</th>
+                        <th style="padding:10px 16px; text-align:left; color:var(--text-muted); font-weight:600;">Sự kiện</th>
+                        <th style="padding:10px 16px; text-align:left; color:var(--text-muted); font-weight:600;">Trạng thái</th>
+                        <th style="padding:10px 16px; text-align:left; color:var(--text-muted); font-weight:600;">IP Address</th>
+                        <th style="padding:10px 16px; text-align:left; color:var(--text-muted); font-weight:600;">Trình duyệt</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody">
+                    <tr>
+                        <td colspan="5" style="padding:32px; text-align:center;">
+                            <div class="skeleton" style="height:32px; margin-bottom:8px;"></div>
+                            <div class="skeleton" style="height:32px; margin-bottom:8px;"></div>
+                            <div class="skeleton" style="height:32px;"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="logsPagination" class="pagination" style="padding:12px 16px;"></div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => loadLogs());
+
+        async function loadLogs(page = 1) {
+            try {
+                const r = await API.security.getLogs({ page, pageSize: 20 });
+                renderLogs(r.data || []);
+                renderPagination(r, page);
+            } catch (e) {
+                document.getElementById('logsBody').innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:var(--accent-red);">Không thể tải nhật ký bảo mật</td></tr>`;
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsBody');
+            if (!logs.length) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:32px; text-align:center; color:var(--text-muted);">Chưa có nhật ký nào</td></tr>`;
+                return;
+            }
+
+            const eventLabels = {
+                Login: 'Đăng nhập', Logout: 'Đăng xuất', Register: 'Đăng ký', PasswordChanged: 'Đổi mật khẩu',
+                PasswordReset: 'Đặt lại mật khẩu', EmailVerified: 'Xác thực email', FailedLogin: 'Đăng nhập thất bại'
+            };
+            const eventIcons = {
+                Login: 'ti-login', Logout: 'ti-logout', Register: 'ti-user-plus',
+                PasswordChanged: 'ti-key', PasswordReset: 'ti-lock', EmailVerified: 'ti-mail-check', FailedLogin: 'ti-alert-circle'
+            };
+
+            tbody.innerHTML = logs.map(log => {
+                const isSuccess = log.isSuccess !== false;
+                const statusColor = isSuccess ? 'var(--accent)' : 'var(--accent-red)';
+                const icon = eventIcons[log.eventType] || 'ti-shield';
+                const label = eventLabels[log.eventType] || log.eventType;
+                const time = new Date(log.createdAt).toLocaleString('vi-VN', {
+                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const ua = log.userAgent || '';
+                const browserIcon = ua.includes('Chrome') ? 'ti-brand-chrome' : ua.includes('Firefox') ? 'ti-brand-firefox' : ua.includes('Safari') ? 'ti-brand-safari' : 'ti-browser';
+                const isMobile = /Mobile|Android/i.test(ua);
+
+                return `<tr style="border-bottom:1px solid var(--border); transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                    <td style="padding:10px 16px; color:var(--text-muted); white-space:nowrap;">${time}</td>
+                    <td style="padding:10px 16px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <i class="ti ${icon}" style="color:${statusColor};"></i>
+                            <span>${label}</span>
+                        </div>
+                    </td>
+                    <td style="padding:10px 16px;">
+                        <span style="background:${statusColor}1a; color:${statusColor}; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;">
+                            ${isSuccess ? '<i class="ti ti-check"></i> Thành công' : '<i class="ti ti-x"></i> Thất bại'}
+                        </span>
+                    </td>
+                    <td style="padding:10px 16px; color:var(--text-secondary); font-family:monospace; font-size:0.8125rem;">${log.ipAddress || '—'}</td>
+                    <td style="padding:10px 16px; color:var(--text-muted); font-size:0.8rem;">
+                        <span style="display:flex; align-items:center; gap:4px;">
+                            <i class="ti ${isMobile ? 'ti-device-mobile' : 'ti-device-desktop'}"></i>
+                            <i class="ti ${browserIcon}"></i>
+                            ${ua.length > 40 ? ua.substring(0, 40) + '...' : ua || '—'}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderPagination(result, currentPage) {
+            const c = document.getElementById('logsPagination');
+            if (!result || result.totalPages <= 1) { c.innerHTML = ''; return; }
+            let html = '';
+            if (result.hasPreviousPage) html += `<button class="pagination-btn" onclick="loadLogs(${currentPage-1})"><i class="ti ti-chevron-left"></i></button>`;
+            for (let i=1; i<=result.totalPages; i++) html+=`<button class="pagination-btn ${i===currentPage?'active':''}" onclick="loadLogs(${i})">${i}</button>`;
+            if (result.hasNextPage) html += `<button class="pagination-btn" onclick="loadLogs(${currentPage+1})"><i class="ti ti-chevron-right"></i></button>`;
+            c.innerHTML = html;
+        }
+    </script>
+}

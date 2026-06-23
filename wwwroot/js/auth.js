@@ -106,7 +106,7 @@ class AuthManager {
     if (typeof router !== 'undefined') {
       router.navigate('/login');
     } else {
-      window.location.href = '/login.html';
+      window.location.href = '/auth/login';
     }
   }
 
@@ -130,7 +130,7 @@ class AuthManager {
     } catch (e) {}
     this._clearSession();
     Toast.show('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'warning');
-    window.location.href = '/login.html';
+    window.location.href = '/auth/login';
     return false;
   }
 
@@ -281,7 +281,7 @@ class AuthManager {
       if (typeof router !== 'undefined') {
         router.navigate('/login');
       } else {
-        window.location.href = '/login.html';
+        window.location.href = '/auth/login';
       }
       return false;
     }

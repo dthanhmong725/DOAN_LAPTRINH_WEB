@@ -89,7 +89,7 @@ public class UserService : IUserService
         return ApiResponse<UserDto>.SuccessResponse(MapToUserDto(user), "Profile updated");
     }
 
-    public async Task<PaginatedResponse<PublicProfileDto>> GetUsersAsync(int page, int pageSize, string? search, string? role)
+    public async Task<PaginatedResponse<PublicProfileDto>> GetUsersAsync(int page, int pageSize, string? search, string? role, int? currentUserId = null)
     {
         var query = _context.Users.AsQueryable();
 
@@ -98,6 +98,9 @@ public class UserService : IUserService
 
         if (!string.IsNullOrEmpty(role) && Enum.TryParse<UserRole>(role, true, out var userRole))
             query = query.Where(u => u.Role == userRole);
+
+        if (currentUserId.HasValue)
+            query = query.Where(u => u.Id != currentUserId.Value);
 
         var totalItems = await query.CountAsync();
         var users = await query
@@ -132,6 +135,18 @@ public class UserService : IUserService
                 }).ToList()
             })
             .ToListAsync();
+
+        if (currentUserId.HasValue && users.Count > 0)
+        {
+            var userIds = users.Select(u => u.Id).ToList();
+            var followingIds = await _context.Follows
+                .Where(f => f.FollowerId == currentUserId.Value && userIds.Contains(f.FollowingId))
+                .Select(f => f.FollowingId)
+                .ToListAsync();
+
+            foreach (var u in users)
+                u.IsFollowing = followingIds.Contains(u.Id);
+        }
 
         return new PaginatedResponse<PublicProfileDto>
         {

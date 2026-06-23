@@ -1,0 +1,77 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Đã lưu - CyberForum";
+}
+
+<section>
+    <h1 style="font-size:1.5rem; margin-bottom:24px; display:flex; align-items:center; gap:10px;">
+        <i class="ti ti-bookmark" style="color:var(--accent);"></i> Bài viết đã lưu
+    </h1>
+    <div id="bookmarksList">
+        <div class="skeleton" style="height:110px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:110px; margin-bottom:12px;"></div>
+        <div class="skeleton" style="height:110px;"></div>
+    </div>
+    <div id="pagination" class="pagination"></div>
+</section>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        document.addEventListener('DOMContentLoaded', () => loadBookmarks());
+
+        async function loadBookmarks(page = 1) {
+            currentPage = page;
+            try {
+                const r = await API.bookmarks.getAll({ page, pageSize: 10 });
+                renderBookmarks(r.data);
+                renderPagination(r);
+            } catch (e) { document.getElementById('bookmarksList').innerHTML = '<p class="text-muted">Không thể tải bookmarks</p>'; }
+        }
+
+        function renderBookmarks(posts) {
+            const c = document.getElementById('bookmarksList');
+            if (!posts || !posts.length) {
+                c.innerHTML = `<div class="empty-state"><i class="ti ti-bookmark-off"></i><h3>Chưa có bài viết nào được lưu</h3><p>Nhấn vào biểu tượng bookmark trên bài viết để lưu lại</p><a href="/" class="btn btn-primary mt-3">Khám phá bài viết</a></div>`;
+                return;
+            }
+            c.innerHTML = posts.map(post => `
+                <article class="post-card">
+                    <div class="post-content">
+                        <a href="/posts/${post.id}" class="post-title" style="text-decoration:none;">${post.title}</a>
+                        <div class="post-meta">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar avatar-sm">${(post.authorUsername||'U').charAt(0).toUpperCase()}</div>
+                                <a href="/users/profile?username=${post.authorUsername}" style="color:inherit; text-decoration:none;">${post.authorUsername}</a>
+                            </div>
+                            <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
+                            <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
+                            <a href="/categories/${post.categorySlug}" class="category-tag ${post.categorySlug}" style="text-decoration:none;">${post.categoryName}</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" onclick="removeBookmark(${post.id}, this)" style="color:var(--accent); align-self:flex-start;" title="Bỏ lưu">
+                        <i class="ti ti-bookmark-filled"></i>
+                    </button>
+                </article>`).join('');
+        }
+
+        async function removeBookmark(postId, btn) {
+            btn.disabled = true;
+            try {
+                await API.bookmarks.toggle(postId);
+                Toast.show('Đã bỏ lưu bài viết', 'info');
+                await loadBookmarks(currentPage);
+            } catch (e) { btn.disabled = false; Toast.show(e.message, 'error'); }
+        }
+
+        function renderPagination(result) {
+            const c = document.getElementById('pagination');
+            if (!result || result.totalPages <= 1) { c.innerHTML = ''; return; }
+            let html = '';
+            if (result.hasPreviousPage) html += `<button class="pagination-btn" onclick="loadBookmarks(${result.page-1})"><i class="ti ti-chevron-left"></i></button>`;
+            for (let i=1; i<=result.totalPages; i++) html+=`<button class="pagination-btn ${i===result.page?'active':''}" onclick="loadBookmarks(${i})">${i}</button>`;
+            if (result.hasNextPage) html += `<button class="pagination-btn" onclick="loadBookmarks(${result.page+1})"><i class="ti ti-chevron-right"></i></button>`;
+            c.innerHTML = html;
+        }
+    </script>
+}

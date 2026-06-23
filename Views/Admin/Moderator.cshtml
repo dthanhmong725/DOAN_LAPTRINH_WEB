@@ -1,0 +1,198 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Trang điều hành - CyberForum";
+    var currentUsername = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+}
+
+<section>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div>
+            <h1 style="font-size:1.5rem; display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                <i class="ti ti-shield" style="color:var(--accent);"></i> Trang điều hành
+            </h1>
+            <p class="text-muted" style="font-size:0.875rem;">Quản lý nội dung và cộng đồng CyberForum</p>
+        </div>
+        <a href="/admin" class="btn btn-secondary">
+            <i class="ti ti-settings"></i> Quản trị đầy đủ
+        </a>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div style="display:flex; border-bottom:1px solid var(--border); overflow-x:auto;">
+            <button class="mod-tab active" data-tab="reports"><i class="ti ti-flag"></i> Báo cáo vi phạm</button>
+            <button class="mod-tab" data-tab="posts"><i class="ti ti-article"></i> Bài viết chờ duyệt</button>
+            <button class="mod-tab" data-tab="recent"><i class="ti ti-clock"></i> Hoạt động gần đây</button>
+        </div>
+
+        @* Reports Tab *@
+        <div id="tab-reports" class="mod-tab-content" style="padding:20px;">
+            <div id="reportsList">
+                <div class="skeleton" style="height:80px; margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:80px; margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:80px;"></div>
+            </div>
+        </div>
+
+        @* Posts Tab *@
+        <div id="tab-posts" class="mod-tab-content" style="padding:20px; display:none;">
+            <p class="text-muted" style="font-size:0.875rem; margin-bottom:16px;">Bài viết đang chờ xem xét hoặc cần điều hành</p>
+            <div id="moderationPosts">
+                <div class="skeleton" style="height:80px; margin-bottom:10px;"></div>
+                <div class="skeleton" style="height:80px;"></div>
+            </div>
+        </div>
+
+        @* Recent Activity Tab *@
+        <div id="tab-recent" class="mod-tab-content" style="padding:20px; display:none;">
+            <div id="recentActivity">
+                <div class="skeleton" style="height:50px; margin-bottom:8px;"></div>
+                <div class="skeleton" style="height:50px; margin-bottom:8px;"></div>
+                <div class="skeleton" style="height:50px;"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .mod-tab { padding:12px 20px; background:none; border:none; cursor:pointer; font-size:0.875rem; font-weight:500; color:var(--text-muted); border-bottom:2px solid transparent; white-space:nowrap; display:flex; align-items:center; gap:6px; transition:all 0.15s; }
+    .mod-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .mod-tab:hover { color:var(--text-primary); }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTabs();
+            loadReports();
+        });
+
+        function setupTabs() {
+            document.querySelectorAll('.mod-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.mod-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.mod-tab-content').forEach(c => c.style.display = 'none');
+                    tab.classList.add('active');
+                    document.getElementById(`tab-${tab.dataset.tab}`).style.display = 'block';
+                    if (tab.dataset.tab === 'posts') loadModerationPosts();
+                    else if (tab.dataset.tab === 'recent') loadRecentActivity();
+                    else if (tab.dataset.tab === 'reports') loadReports();
+                });
+            });
+        }
+
+        async function loadReports() {
+            const c = document.getElementById('reportsList');
+            try {
+                const r = await API.admin.getReports({ page: 1, pageSize: 20, status: 'Pending' });
+                if (!r.success || !r.data || !r.data.length) {
+                    c.innerHTML = `<div class="empty-state"><i class="ti ti-flag-off"></i><h3>Không có báo cáo vi phạm</h3><p>Tất cả báo cáo đã được xử lý</p></div>`;
+                    return;
+                }
+                c.innerHTML = r.data.map(report => `
+                    <div class="card mb-3" style="padding:16px;">
+                        <div style="display:flex; align-items:flex-start; gap:12px;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:var(--accent-red)18; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="ti ti-flag" style="color:var(--accent-red);"></i>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:500; margin-bottom:4px;">
+                                    <a href="/posts/${report.postId}" style="color:var(--text-primary); text-decoration:none;">${report.postTitle || 'Bài viết #' + report.postId}</a>
+                                </div>
+                                <div style="font-size:0.8125rem; color:var(--text-muted); margin-bottom:6px;">
+                                    Báo cáo bởi <strong>${report.reporterUsername}</strong> • ${new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                                </div>
+                                <div style="font-size:0.8125rem; background:var(--accent-red)0d; border-left:3px solid var(--accent-red); padding:6px 10px; border-radius:4px; margin-bottom:8px;">
+                                    <strong>Lý do:</strong> ${report.reason}
+                                    ${report.description ? `<div class="text-muted" style="margin-top:2px;">${report.description}</div>` : ''}
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-sm btn-secondary" onclick="dismissReport(${report.id})"><i class="ti ti-x"></i> Bỏ qua</button>
+                                    <button class="btn btn-sm" style="background:var(--accent-red)1a; color:var(--accent-red); border:1px solid var(--accent-red)44;" onclick="removePost(${report.postId}, ${report.id})">
+                                        <i class="ti ti-trash"></i> Xóa bài
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`).join('');
+            } catch (e) {
+                c.innerHTML = `<div class="empty-state"><i class="ti ti-flag-off"></i><h3>Không có báo cáo vi phạm</h3><p>Tất cả báo cáo đã được xử lý</p></div>`;
+            }
+        }
+
+        async function loadModerationPosts() {
+            const c = document.getElementById('moderationPosts');
+            try {
+                const r = await API.posts.getAll({ page: 1, pageSize: 10, sortBy: 'new' });
+                if (!r.data || !r.data.length) { c.innerHTML = '<p class="text-muted">Không có bài viết nào</p>'; return; }
+                c.innerHTML = r.data.map(p => `
+                    <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);">
+                        <div style="flex:1; min-width:0;">
+                            <a href="/posts/${p.id}" style="font-weight:500; color:var(--text-primary); text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">${p.title}</a>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">@@${p.authorUsername} • ${new Date(p.createdAt).toLocaleDateString('vi-VN')}</div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                            <button class="btn btn-ghost btn-sm" onclick="pinPost(${p.id})" title="${p.isPinned?'Bỏ ghim':'Ghim bài'}">
+                                <i class="ti ${p.isPinned?'ti-pinned-filled':'ti-pin'}" style="color:var(--accent);"></i>
+                            </button>
+                            <button class="btn btn-ghost btn-sm" style="color:var(--accent-red);" onclick="deletePost(${p.id})" title="Xóa bài">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>`).join('');
+            } catch (e) { c.innerHTML = '<p class="text-muted">Không thể tải bài viết</p>'; }
+        }
+
+        async function loadRecentActivity() {
+            const c = document.getElementById('recentActivity');
+            try {
+                const r = await API.admin.getSecurityLogs({ page: 1, pageSize: 20 });
+                if (!r.data || !r.data.length) { c.innerHTML = '<p class="text-muted">Chưa có hoạt động nào</p>'; return; }
+                c.innerHTML = r.data.map(log => {
+                    const icons = { Login:'ti-login', Logout:'ti-logout', Register:'ti-user-plus', PostCreated:'ti-edit', CommentPosted:'ti-message' };
+                    const icon = icons[log.eventType] || 'ti-activity';
+                    const time = new Date(log.createdAt).toLocaleString('vi-VN');
+                    return `<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.875rem;">
+                        <i class="ti ${icon}" style="color:var(--accent); width:20px; text-align:center; flex-shrink:0;"></i>
+                        <span style="flex:1;"><strong>${log.username||'Hệ thống'}</strong> — ${log.eventType}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); flex-shrink:0;">${time}</span>
+                    </div>`;
+                }).join('');
+            } catch (e) { c.innerHTML = '<p class="text-muted">Không thể tải hoạt động</p>'; }
+        }
+
+        async function dismissReport(reportId) {
+            try {
+                await API.admin.updateReport(reportId, 'Dismissed');
+                Toast.show('Đã bỏ qua báo cáo', 'success');
+                loadReports();
+            } catch (e) { Toast.show(e.message || 'Không thể xử lý', 'error'); }
+        }
+
+        async function removePost(postId, reportId) {
+            if (!confirm('Xóa bài viết này? Hành động không thể hoàn tác.')) return;
+            try {
+                await API.posts.delete(postId);
+                if (reportId) await API.admin.updateReport(reportId, 'Resolved').catch(()=>{});
+                Toast.show('Đã xóa bài viết', 'success');
+                loadReports();
+            } catch (e) { Toast.show(e.message || 'Không thể xóa bài', 'error'); }
+        }
+
+        async function pinPost(postId) {
+            try {
+                const r = await API.posts.togglePin(postId);
+                Toast.show(r.data ? 'Đã ghim bài viết' : 'Đã bỏ ghim', 'success');
+                loadModerationPosts();
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('Xóa bài viết này?')) return;
+            try {
+                await API.posts.delete(postId);
+                Toast.show('Đã xóa bài viết', 'success');
+                loadModerationPosts();
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+    </script>
+}

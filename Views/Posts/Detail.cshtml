@@ -1,0 +1,306 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Bài viết - CyberForum";
+    var postId = ViewData["PostId"]?.ToString() ?? "0";
+}
+
+<div class="row">
+    @* Main Post Content *@
+    <div class="col-lg-8">
+        <div class="mb-3">
+            <a href="/" class="btn btn-ghost btn-sm">
+                <i class="ti ti-arrow-left" style="margin-right:4px;"></i>Quay lại
+            </a>
+        </div>
+
+        <div id="postContent">
+            <div class="card" style="padding:20px;">
+                <div class="skeleton" style="height:30px; width:40%; margin-bottom:15px;"></div>
+                <div class="skeleton" style="height:45px; width:90%; margin-bottom:20px;"></div>
+                <div class="skeleton" style="height:150px; margin-bottom:16px;"></div>
+            </div>
+        </div>
+
+        @* Comments Section *@
+        <section class="mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 style="margin:0; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
+                    <i class="ti ti-message" style="color:var(--accent);"></i> Thảo luận công khai
+                </h2>
+                <div id="commentActionArea"></div>
+            </div>
+            <div id="commentsList"></div>
+        </section>
+    </div>
+
+    @* Sidebar Author *@
+    <div class="col-lg-4">
+        <div id="sidebarTarget">
+            <div class="card" style="padding:20px; text-align:center;">
+                <div class="skeleton" style="height:64px; width:64px; border-radius:50%; margin:0 auto 15px;"></div>
+                <div class="skeleton" style="height:20px; width:60%; margin:0 auto 10px;"></div>
+                <div class="skeleton" style="height:15px; width:80%; margin:0 auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Comment Modal *@
+<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true" style="z-index:1055;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-surface-solid); border:1px solid var(--border); border-radius:var(--radius-lg);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                <h3 class="modal-title" id="modalTitle" style="color:#fff; font-size:1.1rem;">Thêm bình luận</h3>
+                <button type="button" class="btn-close btn-close-white" onclick="closeCommentModal()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" id="replyLabel" style="color:var(--text-secondary);">Nội dung bình luận</label>
+                    <div class="editor-container" style="border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden;">
+                        <div class="editor-toolbar" style="display:flex; gap:4px; padding:8px 10px; background:var(--bg-surface2); border-bottom:1px solid var(--border);">
+                            <button type="button" class="toolbar-btn" onclick="execCommand('bold')"><i class="ti ti-bold"></i></button>
+                            <button type="button" class="toolbar-btn" onclick="execCommand('italic')"><i class="ti ti-italic"></i></button>
+                            <button type="button" class="toolbar-btn" onclick="execCommand('insertUnorderedList')"><i class="ti ti-list"></i></button>
+                            <button type="button" class="toolbar-btn" onclick="commentInsertCode()"><i class="ti ti-code"></i></button>
+                        </div>
+                        <div class="editor-content" id="commentEditor" contenteditable="true"
+                             placeholder="Viết bình luận của bạn..."
+                             style="min-height:140px; padding:12px; color:#fff; outline:none; background:rgba(0,0,0,0.2);"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);">
+                <button class="btn btn-secondary" onclick="closeCommentModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="submitComment()">Đăng bình luận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        var isAuth = User.Identity!.IsAuthenticated;
+        var isAdminOrMod = User.IsInRole("Admin") || User.IsInRole("Moderator");
+        var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+    }
+    <script>
+        const _postId = @Html.Raw(postId);
+        const _isAuthenticated = @(isAuth ? "true" : "false");
+        const _isAdminOrMod = @(isAdminOrMod ? "true" : "false");
+        const _currentUserId = @Html.Raw(currentUserIdStr);
+
+        let currentPost = null;
+        let currentUserVote = null;
+        let parentCommentId = null;
+        let bootstrapCommentModal = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!_postId) { window.location.href = '/'; return; }
+            await loadPost();
+        });
+
+        async function loadPost() {
+            try {
+                const result = await API.posts.getById(_postId);
+                if (!result.success) {
+                    document.getElementById('postContent').innerHTML = `<div class="empty-state">
+                        <i class="ti ti-alert-circle"></i><h3>Không tìm thấy bài viết</h3>
+                        <p>Bài viết này có thể đã bị xóa hoặc không tồn tại.</p>
+                        <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
+                    </div>`;
+                    return;
+                }
+                currentPost = result.data;
+                currentUserVote = currentPost.userVote;
+                document.title = `${currentPost.title} - CyberForum`;
+                renderPostData(currentPost);
+                renderSidebarAuthor(currentPost.author);
+                renderCommentButton(currentPost);
+                await loadComments();
+            } catch (e) { console.error('Lỗi tải bài viết:', e); }
+        }
+
+        function renderPostData(post) {
+            const isAuthor = post.author && post.author.id === _currentUserId;
+            document.getElementById('postContent').innerHTML = `
+                <article class="card" style="margin-bottom:24px; padding:20px;">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <a href="/categories/${post.category.slug}" class="category-tag ${post.category.slug}">${post.category.name}</a>
+                        <button class="btn btn-ghost btn-sm bookmark-btn ${post.isBookmarked?'bookmarked':''}" onclick="toggleBookmark()" style="color:${post.isBookmarked?'var(--accent)':''};">
+                            <i class="${post.isBookmarked?'ti ti-bookmark-filled':'ti ti-bookmark'}"></i>
+                        </button>
+                    </div>
+                    <h1 style="font-size:1.5rem; margin-bottom:12px; line-height:1.4; color:#ffffff;">
+                        ${post.isPinned?'<span class="badge badge-success" style="margin-right:8px; font-size:0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>':''}
+                        ${post.isLocked?'<i class="ti ti-lock" style="color:var(--text-muted); margin-right:6px;"></i>':''}
+                        ${post.title}
+                    </h1>
+                    <div class="post-meta mb-3">
+                        <span style="font-weight:500;">By ${post.author.displayName||post.author.username}</span>
+                        <span class="post-meta-item"><i class="ti ti-clock"></i> ${formatDate(post.createdAt)}</span>
+                        <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount} xem</span>
+                    </div>
+                    <div class="post-body" style="line-height:1.8; margin-bottom:16px; color:#e0e0e0;">${post.content}</div>
+                    ${post.tags&&post.tags.length?`<div class="post-tags mb-3">${post.tags.map(t=>`<span class="post-tag">${t}</span>`).join('')}</div>`:''}
+                    ${post.attachments&&post.attachments.length?`<div class="mb-3" style="display:flex; flex-wrap:wrap; gap:10px;">${post.attachments.map(a=>`<a href="${a.fileUrl}" target="_blank" class="btn btn-secondary btn-sm"><i class="ti ti-paperclip" style="color:var(--accent);"></i> ${a.fileName}</a>`).join('')}</div>`:''}
+                    <div class="d-flex justify-content-between align-items-center" style="border-top:1px solid var(--border); padding-top:12px;">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-ghost btn-sm vote-btn ${currentUserVote===1?'upvoted':''}" onclick="vote(1)"><i class="ti ti-arrow-up"></i> ${post.upvoteCount}</button>
+                            <button class="btn btn-ghost btn-sm vote-btn ${currentUserVote===-1?'downvoted':''}" onclick="vote(-1)"><i class="ti ti-arrow-down"></i> ${post.downvoteCount}</button>
+                        </div>
+                        <span class="text-muted" style="font-size:0.8125rem;"><i class="ti ti-message"></i> <span id="commentCount">${post.commentCount}</span> phản hồi</span>
+                    </div>
+                    ${(isAuthor||_isAdminOrMod)?`<div class="d-flex gap-2 mt-3" style="border-top:1px solid var(--border); padding-top:12px;">
+                        <a href="/posts/${post.id}/edit" class="btn btn-ghost btn-sm"><i class="ti ti-edit"></i> Sửa bài</a>
+                        <button class="btn btn-ghost btn-sm" onclick="deletePost()" style="color:var(--accent-red);"><i class="ti ti-trash"></i> Xóa bài</button>
+                        ${_isAdminOrMod?`
+                        <button class="btn btn-ghost btn-sm" onclick="togglePin()" style="color:${post.isPinned?'var(--accent)':''};">
+                            <i class="ti ti-pinned"></i> ${post.isPinned?'Bỏ ghim':'Ghim'}
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="toggleLock()" style="color:${post.isLocked?'var(--accent-orange)':''};">
+                            <i class="ti ti-lock"></i> ${post.isLocked?'Mở khóa':'Khóa'}
+                        </button>`:''}
+                    </div>`:''}
+                </article>`;
+            if (typeof PostRenderer !== 'undefined') PostRenderer.renderAll();
+        }
+
+        function renderSidebarAuthor(author) {
+            if (!author) return;
+            document.getElementById('sidebarTarget').innerHTML = `
+                <div class="card" style="padding:20px; text-align:center; position:sticky; top:calc(var(--navbar-height) + 20px);">
+                    <div style="width:64px; height:64px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; color:var(--accent); font-size:1.5rem; font-weight:bold;">
+                        ${(author.displayName||author.username).charAt(0).toUpperCase()}
+                    </div>
+                    <h4 style="color:#ffffff; font-size:1.1rem; margin-bottom:4px;">${author.displayName||author.username}</h4>
+                    <div class="mb-2"><span class="rank-badge rank-${author.rank.toLowerCase()}">${author.rank}</span></div>
+                    <p class="text-muted small mb-3">${author.bio||'Chuyên gia bảo mật thông tin.'}</p>
+                    <div style="border-top:1px solid var(--border); padding-top:12px;">
+                        <span style="font-weight:600; color:#fff;">${author.reputationPoints||0}</span>
+                        <span class="text-muted small"> Uy tín</span>
+                    </div>
+                    <a href="/users/profile?username=${author.username}" class="btn btn-ghost btn-sm mt-3 w-100">Xem hồ sơ</a>
+                </div>`;
+        }
+
+        function renderCommentButton(post) {
+            const area = document.getElementById('commentActionArea');
+            if (_isAuthenticated && !post.isLocked) {
+                area.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCommentModal()"><i class="ti ti-plus"></i> Thêm thảo luận</button>`;
+            } else if (post.isLocked) {
+                area.innerHTML = `<span class="text-muted small"><i class="ti ti-lock"></i> Đã khóa mục bình luận</span>`;
+            } else {
+                area.innerHTML = `<a href="/auth/login" class="btn btn-ghost btn-sm">Đăng nhập để thảo luận</a>`;
+            }
+        }
+
+        async function loadComments() {
+            try {
+                const result = await API.comments.getByPost(_postId, { page: 1, pageSize: 50 });
+                const container = document.getElementById('commentsList');
+                if (result.success && result.data && result.data.length > 0) {
+                    container.innerHTML = result.data.map(c => renderCommentNode(c)).join('');
+                    if (typeof PostRenderer !== 'undefined') PostRenderer.renderAll();
+                } else {
+                    container.innerHTML = `<div class="text-muted small py-4 text-center">Chưa có bình luận nào. Hãy đưa ra giải pháp đầu tiên!</div>`;
+                }
+            } catch (e) { document.getElementById('commentsList').innerHTML = `<div class="text-danger small py-3">Không thể kết nối danh sách thảo luận.</div>`; }
+        }
+
+        function renderCommentNode(comment) {
+            if (!comment || comment.isDeleted) return '';
+            const authorName = comment.author ? (comment.author.displayName||comment.author.username) : 'Thành viên';
+            const isCommentAuthor = comment.author && comment.author.id === _currentUserId;
+            return `<div class="card mb-3" id="comment-${comment.id}" style="padding:16px; margin-left:${comment.parentCommentId?'24px':'0px'}; border-left:${comment.parentCommentId?'2px solid var(--border-accent)':'none'}; background:rgba(255,255,255,0.01);">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:26px; height:24px; background:var(--bg-surface2); border-radius:50%; text-align:center; line-height:24px; font-weight:bold; font-size:0.75rem; color:var(--accent);">${authorName.charAt(0).toUpperCase()}</div>
+                        <span style="font-weight:500; font-size:0.9rem; color:#fff;">${authorName}</span>
+                        <span class="rank-badge rank-${(comment.author?.rank||'Newbie').toLowerCase()}" style="transform:scale(0.85); font-size:0.65rem;">${comment.author?.rank||'Newbie'}</span>
+                    </div>
+                    <span class="text-muted" style="font-size:0.75rem;">${formatDate(comment.createdAt)}</span>
+                </div>
+                <div style="color:#cbd5e1; font-size:0.915rem; line-height:1.6;">${comment.content}</div>
+                <div class="d-flex gap-3 mt-2 align-items-center" style="font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.03); padding-top:8px;">
+                    <button class="btn btn-link btn-xs p-0 text-muted" onclick="voteComment(${comment.id},1)" style="text-decoration:none;"><i class="ti ti-arrow-up"></i> ${comment.upvoteCount||0}</button>
+                    <button class="btn btn-link btn-xs p-0 text-muted" onclick="voteComment(${comment.id},-1)" style="text-decoration:none;"><i class="ti ti-arrow-down"></i> ${comment.downvoteCount||0}</button>
+                    ${_isAuthenticated&&(!currentPost||!currentPost.isLocked)?`<button class="btn btn-link btn-xs p-0 text-muted" onclick="replyToComment(${comment.id},'${authorName}')" style="text-decoration:none;"><i class="ti ti-reply"></i> Trả lời</button>`:''}
+                    ${(isCommentAuthor||_isAdminOrMod)?`<button class="btn btn-link btn-xs p-0 text-danger" onclick="deleteComment(${comment.id})" style="margin-left:auto; text-decoration:none;"><i class="ti ti-trash"></i> Xóa</button>`:''}
+                </div>
+                ${comment.replies&&comment.replies.length?`<div class="mt-2">${comment.replies.map(r=>renderCommentNode(r)).join('')}</div>`:''}
+            </div>`;
+        }
+
+        function replyToComment(id, name) { parentCommentId = id; openCommentModal(id); document.getElementById('replyLabel').innerHTML = `Trả lời <span style="color:var(--accent);">@@${name}</span>`; }
+        async function vote(direction) {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập để bình chọn', 'warning'); return; }
+            try {
+                if (currentUserVote === direction) { await API.posts.removeVote(_postId); currentUserVote = null; }
+                else { await API.posts.vote(_postId, direction===1); currentUserVote = direction; }
+                await loadPost();
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+        async function voteComment(commentId, direction) {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập', 'warning'); return; }
+            try { await API.comments.vote(_postId, commentId, direction===1); await loadComments(); }
+            catch (e) { Toast.show(e.message, 'error'); }
+        }
+        async function toggleBookmark() {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập để lưu bài', 'warning'); return; }
+            try {
+                const r = await API.bookmarks.toggle(_postId);
+                if (r.success) { Toast.show(r.data?'Đã lưu bài viết':'Đã bỏ lưu', 'success'); await loadPost(); }
+            } catch (e) { Toast.show(e.message||'Có lỗi xảy ra', 'error'); }
+        }
+        async function togglePin() { try { await API.posts.pin(_postId, !currentPost.isPinned); await loadPost(); } catch (e) { Toast.show(e.message, 'error'); } }
+        async function toggleLock() { try { await API.posts.lock(_postId, !currentPost.isLocked); await loadPost(); } catch (e) { Toast.show(e.message, 'error'); } }
+        async function deletePost() {
+            if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
+            try { await API.posts.delete(_postId); Toast.show('Đã xóa bài viết', 'success'); window.location.href = '/'; }
+            catch (e) { Toast.show(e.message, 'error'); }
+        }
+        async function deleteComment(commentId) {
+            if (!confirm('Bạn có chắc muốn xóa bình luận này?')) return;
+            try { await API.comments.delete(_postId, commentId); Toast.show('Đã xóa bình luận', 'success'); await loadComments(); }
+            catch (e) { Toast.show(e.message, 'error'); }
+        }
+        function openCommentModal(parentId=null) {
+            parentCommentId = parentId;
+            if (!bootstrapCommentModal) bootstrapCommentModal = new bootstrap.Modal(document.getElementById('commentModal'));
+            if (!parentId) { document.getElementById('modalTitle').textContent='Thêm bình luận'; document.getElementById('replyLabel').textContent='Nội dung bình luận'; }
+            bootstrapCommentModal.show();
+            setTimeout(()=>document.getElementById('commentEditor').focus(), 300);
+        }
+        function closeCommentModal() {
+            if (bootstrapCommentModal) bootstrapCommentModal.hide();
+            document.getElementById('commentEditor').innerHTML = '';
+            parentCommentId = null;
+        }
+        function execCommand(cmd) { document.execCommand(cmd, false, null); document.getElementById('commentEditor').focus(); }
+        function commentInsertCode() { document.execCommand('insertHTML', false, '<code style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-family:monospace;">code</code>'); }
+        async function submitComment() {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập để thảo luận', 'warning'); return; }
+            const editor = document.getElementById('commentEditor');
+            const content = editor.innerHTML.trim();
+            if (!content || content==='<br>' || content==='<div><br></div>') { Toast.show('Vui lòng nhập nội dung bình luận', 'warning'); return; }
+            try {
+                const r = await API.comments.create(_postId, { content, parentCommentId });
+                if (r.success) {
+                    Toast.show('Đã đăng phản hồi thành công', 'success');
+                    closeCommentModal();
+                    await loadComments();
+                    const el = document.getElementById('commentCount');
+                    if (el) el.textContent = parseInt(el.textContent||'0')+1;
+                } else Toast.show(r.message||'Lỗi đăng bình luận', 'error');
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+        function formatDate(d) {
+            const s = Math.floor((new Date()-new Date(d))/1000);
+            if (s<60) return 'vài giây trước';
+            if (s<3600) return `${Math.floor(s/60)} phút trước`;
+            if (s<86400) return `${Math.floor(s/3600)} giờ trước`;
+            if (s<604800) return `${Math.floor(s/86400)} ngày trước`;
+            return new Date(d).toLocaleDateString('vi-VN',{day:'numeric',month:'short',year:'numeric'});
+        }
+    </script>
+}

@@ -1,0 +1,162 @@
+@model RegisterViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div style="width:100%; max-width:440px; padding:24px;">
+    <div class="text-center mb-4">
+        <a href="/" style="color:var(--accent); text-decoration:none;">
+            <img src="/logo2-Photoroom.png" alt="CyberForum" style="height:40px; width:auto;">
+        </a>
+        <h1 style="font-size:1.375rem; margin-top:12px;">Tham gia CyberForum</h1>
+        <p class="text-muted" style="font-size:0.875rem;">Tạo tài khoản để tham gia cộng đồng an ninh mạng</p>
+    </div>
+
+    @if (Model.IsSuccess)
+    {
+        <div class="card text-center" style="padding:40px 24px;">
+            <div style="margin-bottom:16px;">
+                <i class="ti ti-mail-forward" style="font-size:3rem; color:var(--accent);"></i>
+            </div>
+            <h2 style="font-size:1.125rem; margin-bottom:12px;">Đăng ký thành công!</h2>
+            <p class="text-muted" style="font-size:0.875rem; margin-bottom:12px;">
+                Tài khoản của bạn đã được tạo. Chúng tôi đã gửi một liên kết xác thực email.
+                Vui lòng kiểm tra hộp thư (bao gồm thư mục spam) để xác thực tài khoản.
+            </p>
+            <a href="/auth/login" class="btn btn-primary w-100" style="margin-top:8px;">Đăng nhập ngay</a>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger mb-3" style="border-radius:var(--radius-md); font-size:0.875rem;">
+                <i class="ti ti-alert-circle me-2"></i>@Model.ErrorMessage
+            </div>
+        }
+
+        <form asp-controller="AuthMvc" asp-action="Register" method="post" class="card" id="registerForm">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label asp-for="Username" class="form-label"></label>
+                <div style="position:relative;">
+                    <input asp-for="Username" class="form-input" placeholder="Chọn tên đăng nhập"
+                           style="padding-left:40px;" autocomplete="username">
+                    <i class="ti ti-user" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                </div>
+                <span class="form-hint">3-50 ký tự, chỉ chữ cái, số và dấu gạch dưới</span>
+                <span asp-validation-for="Username" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="form-label"></label>
+                <div style="position:relative;">
+                    <input asp-for="Email" type="email" class="form-input" placeholder="Nhập địa chỉ email"
+                           style="padding-left:40px;" autocomplete="email">
+                    <i class="ti ti-mail" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                </div>
+                <span asp-validation-for="Email" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password" class="form-label"></label>
+                <div style="position:relative;">
+                    <i class="ti ti-lock" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; z-index:1;"></i>
+                    <input asp-for="Password" type="password" id="passwordInput" class="form-input" placeholder="Tạo mật khẩu mạnh"
+                           data-strength-check style="padding-left:38px; padding-right:38px;" autocomplete="new-password">
+                    <button type="button" id="togglePassword"
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; z-index:1;">
+                        <i class="ti ti-eye"></i>
+                    </button>
+                </div>
+                <div id="strengthContainer"></div>
+                <span asp-validation-for="Password" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <div style="position:relative;">
+                    <i class="ti ti-lock" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; z-index:1;"></i>
+                    <input asp-for="ConfirmPassword" type="password" id="confirmInput" class="form-input" placeholder="Nhập lại mật khẩu"
+                           style="padding-left:38px; padding-right:38px;" autocomplete="new-password">
+                    <button type="button" id="toggleConfirm"
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; z-index:1;">
+                        <i class="ti ti-eye"></i>
+                    </button>
+                </div>
+                <div class="pw-confirm-container" style="margin-top:6px;"></div>
+                <span asp-validation-for="ConfirmPassword" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="d-flex align-items-center gap-2" style="cursor:pointer; font-size:0.875rem; color:var(--text-secondary);">
+                    <input asp-for="AgreeToTerms" type="checkbox" style="accent-color:var(--accent);">
+                    <span>Tôi đồng ý với <a href="/terms">Điều khoản sử dụng</a> và <a href="/privacy">Chính sách bảo mật</a></span>
+                </label>
+                <span asp-validation-for="AgreeToTerms" class="form-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" id="submitBtn" style="padding:11px;">
+                <i class="ti ti-user-plus" style="margin-right:6px;"></i>
+                Tạo tài khoản
+            </button>
+        </form>
+
+        <p class="text-center mt-4 text-muted" style="font-size:0.875rem;">
+            Đã có tài khoản? <a href="/auth/login">Đăng nhập</a>
+        </p>
+    }
+</div>
+
+@section Scripts {
+    <script src="/js/password-strength.js"></script>
+    <script>
+        const pwInput = document.getElementById('passwordInput');
+        const confirmInput = document.getElementById('confirmInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const strengthContainer = document.getElementById('strengthContainer');
+
+        if (pwInput) {
+            const confirmContainer = confirmInput
+                ? confirmInput.closest('.form-group').querySelector('.pw-confirm-container')
+                : null;
+
+            const mgr = new PasswordStrengthManager({
+                passwordInput: pwInput,
+                confirmInput: confirmInput,
+                strengthContainer,
+                confirmContainer,
+                submitBtn,
+                minScore: 2,
+                debounceMs: 100
+            });
+            mgr.init();
+        }
+
+        // Toggle password visibility
+        [['togglePassword', 'passwordInput'], ['toggleConfirm', 'confirmInput']].forEach(([btnId, inputId]) => {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
+            if (btn && input) {
+                btn.addEventListener('click', () => {
+                    const isPw = input.type === 'password';
+                    input.type = isPw ? 'text' : 'password';
+                    btn.innerHTML = `<i class="ti ti-eye${isPw ? '-off' : ''}"></i>`;
+                });
+            }
+        });
+
+        // Loading state
+        const form = document.getElementById('registerForm');
+        if (form) {
+            form.addEventListener('submit', () => {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="loading-spinner" style="display:inline-block; margin-right:6px;"></span> Đang tạo tài khoản...';
+                }
+            });
+        }
+    </script>
+}

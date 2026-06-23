@@ -1,0 +1,358 @@
+@{
+    Layout = null; // Chat dùng layout riêng - toàn màn hình
+    ViewData["Title"] = "Tin nhắn - CyberForum";
+    var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+    var currentUsername = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes/cyber.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <style>
+        body { overflow: hidden; }
+        .chat-container { display:flex; height:calc(100vh - var(--navbar-height)); margin-top:var(--navbar-height); background:var(--bg-primary); }
+        .chat-sidebar { width:320px; border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg-surface); transition:width 0.3s, transform 0.3s; }
+        .chat-sidebar.collapsed { transform:translateX(-100%); margin-left:-320px; width:0; }
+        @@media(max-width:768px) { .chat-sidebar { position:absolute; z-index:100; height:100%; } .chat-sidebar.collapsed { transform:translateX(-100%); } }
+        .chat-header { padding:14px 16px; border-bottom:1px solid var(--border); }
+        .chat-list { flex:1; overflow-y:auto; }
+        .chat-room-item { display:flex; align-items:center; gap:12px; padding:12px 16px; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.15s; }
+        .chat-room-item:hover { background:var(--bg-hover); }
+        .chat-room-item.active { background:var(--bg-surface2); border-left:3px solid var(--accent); }
+        .chat-area { flex:1; display:flex; flex-direction:column; min-width:0; }
+        .chat-area-header { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--bg-surface); }
+        .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:6px; scroll-behavior:smooth; }
+        .chat-message { max-width:70%; padding:8px 12px; border-radius:14px; word-wrap:break-word; animation:msgIn 0.2s ease-out; }
+        @@keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .chat-message.own { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+        .chat-message.other { align-self:flex-start; background:var(--bg-surface2); border-bottom-left-radius:4px; }
+        .chat-message-sender { font-size:0.75rem; font-weight:600; color:var(--accent-blue); margin-bottom:2px; display:block; }
+        .chat-message.own .chat-message-sender { color:rgba(255,255,255,0.85); }
+        .chat-message-content { font-size:0.9rem; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+        .chat-message-meta { font-size:0.65rem; margin-top:4px; opacity:0.7; }
+        .chat-input-area { padding:12px 16px; border-top:1px solid var(--border); background:var(--bg-surface); display:flex; align-items:center; gap:8px; }
+        .chat-input-wrapper { flex:1; display:flex; align-items:center; background:var(--bg-surface2); border-radius:24px; padding:0 8px 0 16px; border:1px solid var(--border); transition:border-color 0.15s; }
+        .chat-input-wrapper:focus-within { border-color:var(--accent); }
+        .chat-input { flex:1; background:transparent; border:none; color:var(--text-primary); padding:10px 8px; font-size:0.9rem; outline:none; }
+        .chat-send-btn { background:var(--accent); color:#fff; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.1s, background 0.15s; }
+        .chat-send-btn:hover { transform:scale(1.05); }
+        .reply-preview { padding:8px 12px; background:var(--bg-surface2); border-left:3px solid var(--accent); border-radius:8px; margin:0 16px 8px; display:flex; align-items:center; gap:8px; font-size:0.8rem; }
+        .date-divider { align-self:center; padding:4px 12px; font-size:0.7rem; color:var(--text-muted); background:var(--bg-surface2); border-radius:12px; margin:8px 0; }
+        .typing-indicator { display:inline-flex; align-items:center; gap:3px; padding:8px 12px; background:var(--bg-surface2); border-radius:14px; align-self:flex-start; }
+        .typing-dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); animation:typeBounce 1.2s infinite ease-in-out; }
+        .typing-dot:nth-child(2) { animation-delay:0.15s; } .typing-dot:nth-child(3) { animation-delay:0.3s; }
+        @@keyframes typeBounce { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-4px);opacity:1} }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo"><img src="/logo2-Photoroom.png" alt="CyberForum" style="height:32px;"></a>
+        <div style="flex:1;"></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn btn-primary" onclick="openNewRoomModal()">
+                <i class="ti ti-plus"></i> <span class="d-none d-sm-inline">Tạo cuộc trò chuyện</span>
+            </button>
+            <a href="/" class="btn btn-ghost"><i class="ti ti-home"></i></a>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <div class="chat-sidebar" id="chatSidebar">
+            <div class="chat-header">
+                <input type="search" class="form-input" placeholder="Tìm kiếm cuộc trò chuyện..." id="searchChats">
+            </div>
+            <div class="chat-list" id="chatList">
+                <div style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.875rem;">
+                    <div class="skeleton" style="height:60px; margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:60px; margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:60px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state h-100" id="noChatSelected">
+                <i class="ti ti-messages"></i>
+                <h3>Chọn một cuộc trò chuyện</h3>
+                <p>Chọn từ danh sách hoặc tạo cuộc trò chuyện mới để kết nối</p>
+                <button class="btn btn-primary mt-3" onclick="openNewRoomModal()">
+                    <i class="ti ti-plus"></i> Tạo cuộc trò chuyện
+                </button>
+            </div>
+            <div id="chatView" style="display:none; flex:1; flex-direction:column; min-height:0;">
+                <div class="chat-area-header">
+                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('chatSidebar').classList.toggle('collapsed')" style="display:none;" id="sidebarToggle">
+                        <i class="ti ti-menu-2"></i>
+                    </button>
+                    <div class="avatar" id="chatRoomAvatar" style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600;">C</div>
+                    <div style="flex:1; min-width:0;">
+                        <h3 style="font-size:1rem; font-weight:600; margin:0;" id="chatRoomName">Phòng chat</h3>
+                        <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block;" id="statusDot"></span>
+                            <span id="statusText">Đang kết nối...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <div class="reply-preview" id="replyPreview" style="display:none;">
+                    <i class="ti ti-arrow-back-up" style="color:var(--accent);"></i>
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:var(--accent); font-weight:500; font-size:0.8rem;" id="replySender"></div>
+                        <div style="color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.8rem;" id="replyText"></div>
+                    </div>
+                    <button style="background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="cancelReply()"><i class="ti ti-x"></i></button>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="messageInput" placeholder="Nhập tin nhắn..." autocomplete="off">
+                    </div>
+                    <button class="chat-send-btn" onclick="sendMessage()" id="sendBtn" title="Gửi (Enter)">
+                        <i class="ti ti-send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* New Room Modal *@
+    <div class="modal fade" id="newRoomModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:var(--bg-surface-solid); border:1px solid var(--border); border-radius:var(--radius-lg);">
+                <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                    <h5 class="modal-title" style="color:#fff;">Tạo cuộc trò chuyện mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Tên nhóm (tuỳ chọn)</label>
+                        <input type="text" class="form-input" id="newRoomName" placeholder="Để trống cho chat 1-1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Thêm thành viên (username)</label>
+                        <input type="text" class="form-input" id="addMemberUsername" placeholder="Nhập username và nhấn Enter" id="memberInput">
+                        <div id="membersList" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border);">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary" onclick="createRoom()"><i class="ti ti-plus"></i> Tạo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/site.js"></script>
+    <script>
+        const _currentUserId = parseInt('@Html.Raw(currentUserIdStr)') || 0;
+        const _currentUsername = '@Html.Raw(currentUsername)';
+
+        let connection = null;
+        let currentRoomId = null;
+        let chatRooms = [];
+        let replyTo = null;
+        let newRoomModal = null;
+        const addedMembers = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            newRoomModal = new bootstrap.Modal(document.getElementById('newRoomModal'));
+            setupMemberInput();
+            setupMessageInput();
+            await loadChatRooms();
+            await initSignalR();
+        });
+
+        async function initSignalR() {
+            const token = document.cookie.split(';').find(c=>c.trim().startsWith('access_token='))?.split('=')[1];
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/chat', token ? { accessTokenFactory: () => token } : {})
+                .withAutomaticReconnect()
+                .build();
+            connection.onreconnecting(() => updateStatus('connecting'));
+            connection.onreconnected(() => { updateStatus('connected'); if(currentRoomId) connection.invoke('JoinRoom', currentRoomId).catch(()=>{}); });
+            connection.onclose(() => updateStatus('disconnected'));
+            connection.on('NewMessage', (msg) => {
+                if ((msg.chatRoomId||msg.ChatRoomId) === currentRoomId) { appendMessage(msg); scrollToBottom(); }
+                else loadChatRooms();
+            });
+            connection.on('TypingStarted', (username) => { if(username !== _currentUsername) showTyping(username); });
+            connection.on('TypingStopped', () => hideTyping());
+            try { await connection.start(); updateStatus('connected'); }
+            catch { updateStatus('disconnected'); setTimeout(initSignalR, 5000); }
+        }
+
+        function updateStatus(s) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (!dot) return;
+            dot.style.background = s==='connected'?'#22c55e':s==='connecting'?'#f59e0b':'#ef4444';
+            if (text) text.textContent = s==='connected'?'Đã kết nối':s==='connecting'?'Đang kết nối...':'Mất kết nối';
+        }
+
+        async function loadChatRooms() {
+            try {
+                const r = await API.chat.getRooms({ pageSize: 50 });
+                if (r.success) { chatRooms = r.data || []; renderChatList(); }
+            } catch {}
+        }
+
+        function renderChatList() {
+            document.getElementById('chatList').innerHTML = chatRooms.length ? chatRooms.map(room => `
+                <div class="chat-room-item ${currentRoomId===room.id?'active':''}" onclick="selectRoom(${room.id})">
+                    <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; flex-shrink:0;">${room.name.charAt(0).toUpperCase()}</div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-weight:500; color:var(--text-primary);">${escHtml(room.name)}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">
+                            ${room.lastMessage?.content ? escHtml(room.lastMessage.content) : '<em>Chưa có tin nhắn</em>'}
+                        </div>
+                    </div>
+                    ${room.unreadCount>0?`<span style="background:var(--accent); color:#fff; border-radius:10px; padding:1px 7px; font-size:0.7rem; font-weight:600;">${room.unreadCount}</span>`:''}
+                </div>`).join('')
+                : '<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:0.875rem;">Chưa có cuộc trò chuyện nào</div>';
+        }
+
+        async function selectRoom(roomId) {
+            currentRoomId = roomId;
+            renderChatList();
+            const room = chatRooms.find(r => r.id === roomId);
+            if (room) {
+                document.getElementById('chatRoomName').textContent = room.name;
+                document.getElementById('chatRoomAvatar').textContent = room.name.charAt(0).toUpperCase();
+            }
+            document.getElementById('noChatSelected').style.display = 'none';
+            const cv = document.getElementById('chatView');
+            cv.style.display = 'flex'; cv.style.flexDirection = 'column';
+
+            if (connection && connection.state === 'Connected') {
+                chatRooms.forEach(r => { if(r.id !== roomId && connection) connection.invoke('LeaveRoom', r.id).catch(()=>{}); });
+                await connection.invoke('JoinRoom', roomId).catch(()=>{});
+            }
+            await loadMessages(roomId);
+        }
+
+        async function loadMessages(roomId) {
+            try {
+                const r = await API.chat.getMessages(roomId, { pageSize: 50 });
+                const c = document.getElementById('chatMessages');
+                c.innerHTML = '';
+                if (r.success && r.data) r.data.reverse().forEach(msg => appendMessage(msg));
+                scrollToBottom();
+            } catch {}
+        }
+
+        function appendMessage(msg) {
+            const c = document.getElementById('chatMessages');
+            const isOwn = (msg.senderId||msg.SenderId) === _currentUserId;
+            const senderName = msg.senderUsername || msg.SenderUsername || 'Unknown';
+            const content = msg.content || msg.Content || '';
+            const time = new Date(msg.sentAt||msg.SentAt||Date.now()).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+
+            const div = document.createElement('div');
+            div.className = `chat-message ${isOwn?'own':'other'}`;
+            div.id = `msg-${msg.id||msg.Id}`;
+            div.innerHTML = `
+                ${!isOwn?`<span class="chat-message-sender">${escHtml(senderName)}</span>`:''}
+                ${msg.replyToId?`<div style="font-size:0.75rem; padding:4px 8px; background:rgba(0,0,0,0.15); border-left:3px solid var(--accent); border-radius:4px; margin-bottom:4px; opacity:0.85;">${escHtml(msg.replyToContent||'Tin nhắn đã xóa')}</div>`:''}
+                <div class="chat-message-content">${escHtml(content)}</div>
+                <div class="chat-message-meta">${time}</div>`;
+            c.appendChild(div);
+        }
+
+        function scrollToBottom() {
+            const c = document.getElementById('chatMessages');
+            c.scrollTop = c.scrollHeight;
+        }
+
+        let typingTimeout;
+        function setupMessageInput() {
+            const input = document.getElementById('messageInput');
+            if (!input) return;
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            });
+            input.addEventListener('input', () => {
+                if (connection && currentRoomId) connection.invoke('StartTyping', currentRoomId).catch(()=>{});
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => { if(connection && currentRoomId) connection.invoke('StopTyping', currentRoomId).catch(()=>{}); }, 2000);
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content || !currentRoomId) return;
+            try {
+                await API.chat.sendMessage(currentRoomId, { content, replyToMessageId: replyTo?.id || null });
+                input.value = '';
+                cancelReply();
+            } catch (e) { Toast.show(e.message||'Không thể gửi tin nhắn', 'error'); }
+        }
+
+        function cancelReply() { replyTo = null; document.getElementById('replyPreview').style.display = 'none'; }
+
+        let typingEl = null;
+        function showTyping(username) {
+            if (!typingEl) {
+                typingEl = document.createElement('div');
+                typingEl.className = 'typing-indicator';
+                typingEl.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); margin-right:6px;">${escHtml(username)}</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
+                document.getElementById('chatMessages').appendChild(typingEl);
+                scrollToBottom();
+            }
+        }
+        function hideTyping() { if(typingEl) { typingEl.remove(); typingEl = null; } }
+
+        function setupMemberInput() {
+            const input = document.getElementById('addMemberUsername');
+            if (!input) return;
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addMember(input.value.trim()); input.value = ''; }
+            });
+        }
+
+        function addMember(username) {
+            if (!username || addedMembers.includes(username) || username === _currentUsername) return;
+            addedMembers.push(username);
+            const c = document.getElementById('membersList');
+            const span = document.createElement('span');
+            span.style.cssText = 'background:var(--accent)22; border:1px solid var(--accent)44; padding:3px 10px; border-radius:12px; font-size:0.8rem; display:flex; align-items:center; gap:6px; color:var(--accent);';
+            span.innerHTML = `@@${escHtml(username)} <button onclick="removeMember('${username}', this.parentElement)" style="background:none; border:none; color:inherit; cursor:pointer; padding:0; font-size:0.9rem;"><i class="ti ti-x"></i></button>`;
+            c.appendChild(span);
+        }
+        function removeMember(username, el) { const i = addedMembers.indexOf(username); if(i>-1) addedMembers.splice(i,1); el.remove(); }
+
+        function openNewRoomModal() { newRoomModal.show(); }
+
+        async function createRoom() {
+            if (!addedMembers.length) { Toast.show('Thêm ít nhất 1 thành viên', 'warning'); return; }
+            try {
+                const name = document.getElementById('newRoomName').value.trim() || (addedMembers.length === 1 ? addedMembers[0] : `Nhóm ${addedMembers.join(', ')}`);
+                const r = await API.chat.createRoom({ name, type: addedMembers.length > 1 ? 'Group' : 'Direct', memberUsernames: [_currentUsername, ...addedMembers] });
+                if (r.success) {
+                    newRoomModal.hide();
+                    await loadChatRooms();
+                    selectRoom(r.data.id);
+                    Toast.show('Đã tạo cuộc trò chuyện!', 'success');
+                } else Toast.show(r.message || 'Không thể tạo', 'error');
+            } catch (e) { Toast.show(e.message, 'error'); }
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>

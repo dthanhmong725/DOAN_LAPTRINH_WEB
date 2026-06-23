@@ -128,7 +128,7 @@
       <article class="card" style="margin-bottom: 24px;">
         <div class="d-flex justify-between align-start mb-3">
           <div>
-            <a href="/category.html?slug=${post.category.slug}" class="category-tag ${post.category.slug}">
+            <a href="/categories/${post.category.slug}" class="category-tag ${post.category.slug}">
               ${post.category.name}
             </a>
           </div>
@@ -155,7 +155,7 @@
 
         <div class="post-meta mb-3">
           <div class="d-flex align-center gap-2">
-            <a href="/profile.html?username=${post.author.username}" class="d-flex align-center gap-2" style="color: inherit; text-decoration: none;">
+            <a href="/users/profile?username=${post.author.username}" class="d-flex align-center gap-2" style="color: inherit; text-decoration: none;">
               <div class="avatar avatar-sm">${(post.author.displayName || post.author.username).charAt(0).toUpperCase()}</div>
               <div>
                 <div style="display: flex; align-items: center; gap: 6px;">
@@ -190,7 +190,7 @@
 
         ${(isAuthor || isAdminOrMod) ? `
           <div class="d-flex gap-2 mt-3" style="border-top: 1px solid var(--border); padding-top: 12px;">
-            <a href="/edit-post.html?id=${post.id}" class="btn btn-ghost btn-sm">
+            <a href="/posts/${post.id}/edit" class="btn btn-ghost btn-sm">
               <i class="ti ti-edit"></i> Sửa
             </a>
             <button class="btn btn-ghost btn-sm" onclick="deletePost()" style="color: var(--accent-red);">

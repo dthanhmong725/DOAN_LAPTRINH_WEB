@@ -26,7 +26,7 @@
 
     if (!AuthManager.isAuthenticated()) {
       const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `/login.html?redirect=${redirect}`;
+      window.location.href = `/auth/login?redirect=${redirect}`;
       return;
     }
 

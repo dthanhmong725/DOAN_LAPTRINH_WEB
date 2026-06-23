@@ -1,6 +1,6 @@
 // CyberForum - Message Bell Module
 // Hiển thị nút chuông tin nhắn (badge số chưa đọc) ngay cạnh nút Thông báo.
-// Bấm vào sẽ điều hướng thẳng tới /chat.html (không có dropdown xem trước).
+// Bấm vào sẽ điều hướng thẳng tới /chat (không có dropdown xem trước).
 class MessageBell {
   static _pollInterval = null;
   static _POLL_MS = 15000;
@@ -49,7 +49,7 @@ class MessageBell {
     `;
 
     btn.addEventListener('click', () => {
-      window.location.href = '/chat.html';
+      window.location.href = '/chat';
     });
 
     notifBtn.insertAdjacentElement('afterend', btn);

@@ -1,0 +1,155 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Danh mục - CyberForum";
+    var slug = ViewData["CategorySlug"]?.ToString() ?? "";
+}
+
+<div id="categoryHeader" style="margin-bottom:24px;">
+    <div class="skeleton" style="height:32px; width:200px; margin-bottom:8px;"></div>
+    <div class="skeleton" style="height:18px; width:300px;"></div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 id="postsHeading" style="font-size:1.125rem; display:flex; align-items:center; gap:8px; margin:0;">
+        <i class="ti ti-flame" style="color:var(--accent);"></i> Bài viết
+    </h2>
+    <div class="d-flex gap-2">
+        <select id="sortSelect" class="form-select" style="width:auto; padding:6px 12px;">
+            <option value="">Mới nhất</option>
+            <option value="views">Xem nhiều nhất</option>
+            <option value="comments">Bình luận nhiều nhất</option>
+        </select>
+        @if (User.Identity!.IsAuthenticated)
+        {
+            <a href="/posts/create" class="btn btn-primary btn-sm">
+                <i class="ti ti-plus"></i> Bài mới
+            </a>
+        }
+    </div>
+</div>
+
+<div id="postsList">
+    <div class="skeleton" style="height:110px; margin-bottom:12px;"></div>
+    <div class="skeleton" style="height:110px; margin-bottom:12px;"></div>
+    <div class="skeleton" style="height:110px;"></div>
+</div>
+
+<div id="pagination" class="pagination"></div>
+
+@section Scripts {
+    @{ var isAuth = User.Identity!.IsAuthenticated; }
+    <script>
+        const _slug = '@Html.Raw(slug)';
+        const _isAuthenticated = @(isAuth ? "true" : "false");
+        let _catId = null;
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCategory();
+            document.getElementById('sortSelect').addEventListener('change', (e) => loadPosts(1, e.target.value));
+        });
+
+        async function loadCategory() {
+            try {
+                const r = await API.categories.getBySlug(_slug);
+                if (r.success) {
+                    const cat = r.data;
+                    _catId = cat.id;
+                    const icon = cat.icon.startsWith('ti-') ? cat.icon : 'ti-' + cat.icon;
+                    document.getElementById('categoryHeader').innerHTML = `
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px;">
+                            <div style="width:48px; height:48px; border-radius:var(--radius-md); background:${cat.color}18; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="ti ${icon}" style="color:${cat.color}; font-size:1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h1 style="font-size:1.5rem; margin-bottom:4px;">${cat.name}</h1>
+                                ${cat.description ? `<p class="text-muted" style="margin:0; font-size:0.875rem;">${cat.description}</p>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:16px; font-size:0.8125rem; color:var(--text-muted);">
+                            <span><i class="ti ti-article"></i> ${cat.postCount} bài viết</span>
+                        </div>`;
+                    document.title = `${cat.name} - CyberForum`;
+                    await loadPosts();
+                } else {
+                    document.getElementById('categoryHeader').innerHTML = `<h1>Không tìm thấy danh mục</h1>`;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadPosts(page = 1, sortBy = '') {
+            currentPage = page;
+            const sort = sortBy || document.getElementById('sortSelect').value;
+            try {
+                const r = await API.posts.getAll({ page, pageSize: 10, sortBy: sort, categorySlug: _slug });
+                renderPosts(r.data);
+                renderPagination(r);
+            } catch (e) {
+                document.getElementById('postsList').innerHTML = '<p class="text-muted">Không thể tải bài viết</p>';
+            }
+        }
+
+        function renderPosts(posts) {
+            const c = document.getElementById('postsList');
+            if (!posts || !posts.length) {
+                c.innerHTML = `<div class="empty-state">
+                    <i class="ti ti-inbox"></i><h3>Chưa có bài viết nào</h3>
+                    <p>Hãy là người đầu tiên chia sẻ kiến thức trong chủ đề này!</p>
+                    ${_isAuthenticated ? '<a href="/posts/create" class="btn btn-primary mt-3">Tạo bài viết</a>' : ''}
+                </div>`;
+                return;
+            }
+            c.innerHTML = posts.map(post => `
+                <article class="post-card ${post.isPinned?'pinned':''}">
+                    <div class="post-votes">
+                        <button class="vote-btn ${post.userVote===1?'upvoted':''}" onclick="votePost(${post.id},true)"><i class="ti ti-arrow-up"></i></button>
+                        <span class="vote-count ${(post.upvoteCount-post.downvoteCount)>0?'positive':(post.upvoteCount-post.downvoteCount)<0?'negative':''}">${post.upvoteCount-post.downvoteCount}</span>
+                        <button class="vote-btn ${post.userVote===-1?'downvoted':''}" onclick="votePost(${post.id},false)"><i class="ti ti-arrow-down"></i></button>
+                    </div>
+                    <div class="post-content">
+                        <a href="/posts/${post.id}" class="post-title" style="text-decoration:none;">
+                            ${post.isPinned?'<span class="badge badge-success" style="margin-right:6px; font-size:0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>':''}${post.title}
+                        </a>
+                        <div class="post-meta">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar avatar-sm">${(post.authorUsername||'U').charAt(0).toUpperCase()}</div>
+                                <a href="/users/profile?username=${post.authorUsername}" style="color:inherit; text-decoration:none;">${post.authorUsername}</a>
+                            </div>
+                            <span class="post-meta-item"><i class="ti ti-clock"></i> ${formatTimeAgo(post.createdAt)}</span>
+                            <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
+                            <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
+                        </div>
+                        ${post.tags&&post.tags.length?`<div class="post-tags">${post.tags.map(t=>`<span class="post-tag">${t}</span>`).join('')}</div>`:''}
+                    </div>
+                </article>`).join('');
+        }
+
+        function renderPagination(result) {
+            const c = document.getElementById('pagination');
+            if (!result || result.totalPages <= 1) { c.innerHTML = ''; return; }
+            let html = '';
+            if (result.hasPreviousPage) html += `<button class="pagination-btn" onclick="loadPosts(${result.page-1})"><i class="ti ti-chevron-left"></i></button>`;
+            for (let i=1; i<=result.totalPages; i++) {
+                if (i===1||i===result.totalPages||(i>=result.page-1&&i<=result.page+1)) html+=`<button class="pagination-btn ${i===result.page?'active':''}" onclick="loadPosts(${i})">${i}</button>`;
+                else if (i===result.page-2||i===result.page+2) html+=`<span style="color:var(--text-muted);padding:0 4px;">...</span>`;
+            }
+            if (result.hasNextPage) html += `<button class="pagination-btn" onclick="loadPosts(${result.page+1})"><i class="ti ti-chevron-right"></i></button>`;
+            c.innerHTML = html;
+        }
+
+        async function votePost(postId, isUpvote) {
+            if (!_isAuthenticated) { Toast.show('Vui lòng đăng nhập để bình chọn', 'warning'); return; }
+            try { await API.posts.vote(postId, isUpvote); await loadPosts(currentPage); }
+            catch (e) { Toast.show(e.message, 'error'); }
+        }
+
+        function formatTimeAgo(d) {
+            const s = Math.floor((new Date()-new Date(d))/1000);
+            if (s<60) return 'vài giây trước';
+            if (s<3600) return `${Math.floor(s/60)} phút trước`;
+            if (s<86400) return `${Math.floor(s/3600)} giờ trước`;
+            if (s<604800) return `${Math.floor(s/86400)} ngày trước`;
+            return new Date(d).toLocaleDateString('vi-VN',{day:'numeric',month:'short',year:'numeric'});
+        }
+    </script>
+}

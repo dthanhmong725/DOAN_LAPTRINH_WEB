@@ -38,7 +38,7 @@ class SiteUtils {
         e.stopPropagation();
         if (typeof AuthManager === 'undefined') return;
         if (!AuthManager.isAuthenticated()) {
-          window.location.href = '/login.html';
+          window.location.href = '/auth/login';
           return;
         }
         if (typeof Toast !== 'undefined') {

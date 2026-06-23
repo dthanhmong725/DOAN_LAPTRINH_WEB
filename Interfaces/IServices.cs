@@ -8,7 +8,7 @@ public interface IUserService
     Task<ApiResponse<UserDto>> GetByIdAsync(int id);
     Task<ApiResponse<PublicProfileDto>> GetPublicProfileAsync(string username);
     Task<ApiResponse<UserDto>> UpdateProfileAsync(int userId, UpdateProfileDto dto);
-    Task<PaginatedResponse<PublicProfileDto>> GetUsersAsync(int page, int pageSize, string? search, string? role);
+    Task<PaginatedResponse<PublicProfileDto>> GetUsersAsync(int page, int pageSize, string? search, string? role, int? currentUserId = null);
     Task<ApiResponse<ReputationDto>> GetReputationAsync(int userId);
     Task<ApiResponse<List<LeaderboardEntryDto>>> GetLeaderboardAsync(int page, int pageSize);
 }
