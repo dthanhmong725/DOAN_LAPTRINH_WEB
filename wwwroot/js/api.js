@@ -109,7 +109,15 @@ class ApiClient {
     }
 
     get(endpoint, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
+        // TỰ ĐỘNG LỌC: Bỏ qua tất cả các tham số rỗng, null hoặc undefined
+        const cleanParams = {};
+        for (const [key, value] of Object.entries(params)) {
+            if (value !== null && value !== undefined && value !== "") {
+                cleanParams[key] = value;
+            }
+        }
+
+        const queryString = new URLSearchParams(cleanParams).toString();
         const url = queryString ? `${endpoint}?${queryString}` : endpoint;
         return this.request(url);
     }
