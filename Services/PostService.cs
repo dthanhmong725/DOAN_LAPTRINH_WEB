@@ -402,8 +402,10 @@ public class PostService : IPostService
             return ApiResponse<bool>.ErrorResponse("Bạn chỉ có thể xóa bài viết của mình");
 
         post.IsDeleted = true;
-        post.Category!.PostCount--;
-        post.Category = null;
+        if (post.Category != null)
+        {
+            post.Category.PostCount = Math.Max(0, post.Category.PostCount - 1);
+        }
 
         await _context.SaveChangesAsync();
         await _securityLogService.LogAsync(userId, SecurityAction.DeletePost, null, null, $"Xóa bài viết: {post.Title}", true);

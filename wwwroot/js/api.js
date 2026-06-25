@@ -287,7 +287,8 @@ const API = {
     },
 
     reputation: {
-        getMy: () => api.get('/reputation/me/history'),
+        getMy: (params) => api.get('/reputation/me/history', params),
+        getHistory: (params) => api.get('/reputation/me/history', params),
         getUser: (userId) => api.get(`/reputation/user/${userId}`),
         getUserHistory: (userId, params) => api.get(`/reputation/user/${userId}/history`, params),
         getLeaderboard: (params) => api.get('/reputation/leaderboard', params),

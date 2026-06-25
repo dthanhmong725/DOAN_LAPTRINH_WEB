@@ -1,4 +1,4 @@
-function initSettings() {
+async function initSettings() {
     // Đọc username từ data attribute - không cần inline script, không bị CSP block
     const settingsRoot = document.getElementById('settingsRoot');
     const username = settingsRoot ? settingsRoot.dataset.username : '';
@@ -80,4 +80,7 @@ function initSettings() {
             localStorage.setItem('cf_font_size', size);
         });
     }
-});
+}
+
+// Khởi chạy khi script được tải
+initSettings();

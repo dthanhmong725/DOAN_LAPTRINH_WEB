@@ -28,16 +28,53 @@
             } catch (e) { console.error(e); }
         });
 
+        function getBadgeIcon(icon) {
+            const icons = {
+                'file-text': 'file-text',
+                'star': 'star',
+                'award': 'award',
+                'shield': 'shield',
+                'thumbs-up': 'thumb-up',
+                'heart': 'heart',
+                'crown': 'crown',
+                'bookmark': 'bookmark',
+                'moon': 'moon',
+                'trophy': 'trophy'
+            };
+            return icons[icon] || 'medal';
+        }
+
         function renderBadges(badges) {
             const c = document.getElementById('badgesGrid');
-            c.innerHTML = badges.map(b => `
-                <div class="card" style="padding:20px; text-align:center; ${b.isEarned?'border:1px solid var(--accent)44; background:var(--accent)08;':'opacity:0.7;'}">
-                    <div style="font-size:2.5rem; margin-bottom:10px;">${b.icon || '🏅'}</div>
-                    <h3 style="font-size:0.9375rem; margin-bottom:6px; color:${b.isEarned?'var(--accent)':'var(--text-primary)'};">${b.name}</h3>
-                    <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.4; margin-bottom:8px;">${b.description||''}</p>
-                    ${b.isEarned?`<span style="font-size:0.75rem; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:4px;"><i class="ti ti-circle-check-filled"></i> Đã đạt được</span>`:
-                    `<span style="font-size:0.75rem; color:var(--text-muted);"><i class="ti ti-lock"></i> Chưa đạt được</span>`}
-                </div>`).join('');
+            if (!badges || !badges.length) {
+                c.innerHTML = '<p class="text-muted">Không có huy hiệu nào</p>';
+                return;
+            }
+            c.innerHTML = badges.map(b => {
+                const isEarned = b.isEarned;
+                const badgeColor = b.color || '#ffc107';
+                return `
+                <div class="card" style="padding: 24px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border-radius: var(--radius-md); transition: transform 0.2s, box-shadow 0.2s; ${isEarned ? 'border: 1px solid ' + badgeColor + '44; background: ' + badgeColor + '0d;' : 'opacity: 0.55;'}">
+                    <div>
+                        <div style="width: 60px; height: 60px; margin: 0 auto 16px; border-radius: 50%; background: ${badgeColor}18; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="ti ti-${getBadgeIcon(b.icon)}" style="font-size: 1.75rem; color: ${badgeColor};"></i>
+                        </div>
+                        <h3 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: ${isEarned ? 'var(--text-primary)' : 'var(--text-muted)'};">${b.name}</h3>
+                        <p style="font-size: 0.8125rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">${b.description || 'Không có mô tả'}</p>
+                    </div>
+                    <div>
+                        ${isEarned ? `
+                            <span class="badge" style="font-size: 0.75rem; background: ${badgeColor}22; color: ${badgeColor}; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ti ti-circle-check-filled"></i> Đã đạt được
+                            </span>
+                        ` : `
+                            <span class="badge" style="font-size: 0.75rem; background: var(--bg-surface2); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="ti ti-lock"></i> Chưa đạt được
+                            </span>
+                        `}
+                    </div>
+                </div>`;
+            }).join('');
         }
     </script>
 }
