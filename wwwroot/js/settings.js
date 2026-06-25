@@ -1,5 +1,8 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Tab Switching Logic
+function initSettings() {
+    // Đọc username từ data attribute - không cần inline script, không bị CSP block
+    const settingsRoot = document.getElementById('settingsRoot');
+    const username = settingsRoot ? settingsRoot.dataset.username : '';
+
     const tabs = document.querySelectorAll('.settings-tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -13,8 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2. Load Profile Data
     try {
-        if (window.SETTINGS_USERNAME) {
-            const r = await API.users.getProfile(window.SETTINGS_USERNAME);
+        if (username) {
+            const r = await API.users.getProfile(username);
             if (r.success) {
                 const u = r.data;
                 const displayNameEl = document.getElementById('displayName');

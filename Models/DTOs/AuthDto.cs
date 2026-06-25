@@ -136,10 +136,8 @@ public class UpdateProfileDto
     [StringLength(1000)]
     public string? Bio { get; set; }
 
-    [Url]
     public string? AvatarUrl { get; set; }
 
-    [Url]
     public string? CoverPhotoUrl { get; set; }
 }
 

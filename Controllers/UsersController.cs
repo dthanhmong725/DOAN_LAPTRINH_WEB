@@ -72,6 +72,15 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+    {
+        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _userService.UpdateProfileAsync(currentUserId, dto);
+        if (!result.Success) return BadRequest(result);
+        return Ok(result);
+    }
+
     [HttpGet("{targetUserId}/follow-status")]
     public async Task<IActionResult> GetFollowStatus(int targetUserId)
     {

@@ -4,7 +4,7 @@
     var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
 }
 
-<div style="max-width:700px; margin:0 auto;">
+<div id="settingsRoot" data-username="@username" style="max-width:700px; margin:0 auto;">
     <h1 style="font-size:1.5rem; margin-bottom:24px; display:flex; align-items:center; gap:10px;">
         <i class="ti ti-settings" style="color:var(--accent);"></i> Cài đặt tài khoản
     </h1>
@@ -120,9 +120,5 @@
 </style>
 
 @section Scripts {
-    <script>
-        // Pass the username to the external script using a global variable
-        window.SETTINGS_USERNAME = '@Html.Raw(username)';
-    </script>
     <script src="/js/settings.js" asp-append-version="true"></script>
 }
