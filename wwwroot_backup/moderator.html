@@ -1,0 +1,399 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Điều hành - CyberForum</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/notification-bell.css">
+</head>
+<body style="background: var(--bg-primary); min-height: 100vh;">
+  <div class="page-wrapper">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <a href="/" class="logo">
+        <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
+      </a>
+      <div style="flex: 1;"></div>
+      <a href="/" class="btn btn-ghost btn-sm">
+        <i class="ti ti-home"></i> Quay lại diễn đàn
+      </a>
+      <a href="/admin.html" class="btn btn-ghost btn-sm requires-admin" style="display: none;">
+        <i class="ti ti-settings"></i> Bảng quản trị
+      </a>
+      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+          <i class="ti ti-bell"></i>
+        </button>
+        <a href="/profile.html" class="btn btn-ghost btn-sm" style="display: flex; align-items: center;">
+          <span class="user-avatar avatar avatar-sm"></span>
+          <span class="user-name" style="margin-left: 6px;"></span>
+        </a>
+      </div>
+      <a href="javascript:void(0)" data-action="logout" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; color: var(--accent-red); border: 1px solid var(--accent-red); border-radius: var(--radius-sm); padding: 6px 12px;">
+        <i class="ti ti-logout"></i>
+        <span style="margin-left: 4px;">Đăng xuất</span>
+      </a>
+    </nav>
+
+    <div class="main-content" style="margin-top: var(--navbar-height);">
+      <div class="container">
+        <!-- Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+          <div>
+            <h1 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+              <i class="ti ti-shield" style="color: var(--accent-orange);"></i>
+              Trang điều hành
+            </h1>
+            <p class="text-muted" style="font-size: 0.875rem; margin-top: 4px;">
+              Quản lý bài viết và nội dung diễn đàn
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="card" style="padding: 0; margin-bottom: 20px; overflow: hidden;">
+          <div style="display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;">
+            <button class="mod-tab active" data-tab="posts" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--accent);
+              border-bottom: 2px solid var(--accent); white-space: nowrap;">
+              <i class="ti ti-article"></i> Bài viết cần duyệt
+            </button>
+            <button class="mod-tab" data-tab="pins" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+              border-bottom: 2px solid transparent; white-space: nowrap;">
+              <i class="ti ti-pinned"></i> Bài đã ghim
+            </button>
+            <button class="mod-tab" data-tab="locked" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+              border-bottom: 2px solid transparent; white-space: nowrap;">
+              <i class="ti ti-lock"></i> Bài đã khóa
+            </button>
+          </div>
+
+          <!-- Posts Tab -->
+          <div id="tab-posts" class="mod-tab-content" style="padding: 20px;">
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="postSearch" class="form-input" placeholder="Tìm kiếm bài viết...">
+              </div>
+              <select id="categoryFilter" class="form-select" style="width: auto; min-width: 160px;">
+                <option value="">Tất cả danh mục</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="ModPanel.loadPosts(1)">
+                <i class="ti ti-search"></i> Tìm kiếm
+              </button>
+            </div>
+
+            <div id="postsList" style="display: flex; flex-direction: column; gap: 12px;">
+              <div class="skeleton" style="height: 110px;"></div>
+              <div class="skeleton" style="height: 110px;"></div>
+            </div>
+
+            <div id="postsPagination" class="pagination" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- Pinned Posts Tab -->
+          <div id="tab-pins" class="mod-tab-content" style="padding: 20px; display: none;">
+            <div id="pinnedList" style="display: flex; flex-direction: column; gap: 12px;">
+              <div class="skeleton" style="height: 110px;"></div>
+            </div>
+          </div>
+
+          <!-- Locked Posts Tab -->
+          <div id="tab-locked" class="mod-tab-content" style="padding: 20px; display: none;">
+            <div id="lockedList" style="display: flex; flex-direction: column; gap: 12px;">
+              <div class="skeleton" style="height: 110px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/role-guard.js"></script>
+  <script src="/js/notification-bell.js"></script>
+  <script src="/js/message-bell.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const ModPanel = {
+      currentPage: 1,
+
+      async init() {
+        await AuthManager.restoreSession();
+
+        if (!AuthManager.isModerator()) {
+          Toast.show('Bạn không có quyền truy cập trang điều hành', 'error');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        AuthManager.updateUI();
+        RoleGuard.applyVisibility();
+        this.setupTabs();
+        this.loadCategories();
+        this.loadPosts(1);
+      },
+
+      setupTabs() {
+        document.querySelectorAll('.mod-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            document.querySelectorAll('.mod-tab').forEach(t => {
+              t.classList.remove('active');
+              t.style.color = 'var(--text-muted)';
+              t.style.borderBottomColor = 'transparent';
+            });
+            tab.classList.add('active');
+            tab.style.color = 'var(--accent)';
+            tab.style.borderBottomColor = 'var(--accent)';
+
+            document.querySelectorAll('.mod-tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`tab-${tab.dataset.tab}`).style.display = 'block';
+
+            if (tab.dataset.tab === 'pins') this.loadPinnedPosts();
+            if (tab.dataset.tab === 'locked') this.loadLockedPosts();
+          });
+        });
+
+        document.getElementById('postSearch').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.loadPosts(1);
+        });
+      },
+
+      async loadCategories() {
+        try {
+          const result = await API.categories.getAll();
+          if (result.success) {
+            const select = document.getElementById('categoryFilter');
+            result.data.forEach(cat => {
+              const opt = document.createElement('option');
+              opt.value = cat.id;
+              opt.textContent = cat.name;
+              select.appendChild(opt);
+            });
+          }
+        } catch (e) {}
+      },
+
+      async loadPosts(page = 1) {
+        this.currentPage = page;
+        const search = document.getElementById('postSearch').value;
+        const categoryId = document.getElementById('categoryFilter').value;
+
+        const container = document.getElementById('postsList');
+        container.innerHTML = `
+          <div class="skeleton" style="height: 110px;"></div>
+          <div class="skeleton" style="height: 110px;"></div>`;
+
+        try {
+          const result = await API.posts.getAll({
+            page,
+            pageSize: 15,
+            search: search || undefined,
+            categoryId: categoryId || undefined
+          });
+
+          if (!result.success || !result.data?.length) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-article-off"></i>
+                <h3>Không có bài viết nào</h3>
+                <p>Không tìm thấy bài viết phù hợp.</p>
+              </div>`;
+            return;
+          }
+
+          container.innerHTML = result.data.map(post => this.renderPostCard(post, true)).join('');
+          this.renderPagination(result);
+        } catch (e) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-alert-circle"></i>
+              <h3>Lỗi khi tải bài viết</h3>
+            </div>`;
+        }
+      },
+
+      async loadPinnedPosts() {
+        const container = document.getElementById('pinnedList');
+        try {
+          const result = await API.posts.getAll({ page: 1, pageSize: 50 });
+          const pinned = (result.data || []).filter(p => p.isPinned);
+          if (!pinned.length) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-pinned"></i>
+                <h3>Chưa có bài viết nào được ghim</h3>
+                <p>Các bài viết được ghim sẽ hiển thị ở đây.</p>
+              </div>`;
+            return;
+          }
+          container.innerHTML = pinned.map(post => this.renderPostCard(post, false)).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải</h3></div>`;
+        }
+      },
+
+      async loadLockedPosts() {
+        const container = document.getElementById('lockedList');
+        try {
+          const result = await API.posts.getAll({ page: 1, pageSize: 50 });
+          const locked = (result.data || []).filter(p => p.isLocked);
+          if (!locked.length) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <i class="ti ti-lock"></i>
+                <h3>Chưa có bài viết nào bị khóa</h3>
+                <p>Các bài viết bị khóa sẽ hiển thị ở đây.</p>
+              </div>`;
+            return;
+          }
+          container.innerHTML = locked.map(post => this.renderPostCard(post, false)).join('');
+        } catch (e) {
+          container.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Lỗi khi tải</h3></div>`;
+        }
+      },
+
+      renderPostCard(post, showModActions) {
+        const time = this.formatTimeAgo(post.createdAt);
+
+        return `
+          <div class="post-card" style="${post.isPinned ? 'border-left: 3px solid var(--accent);' : ''}">
+            <div class="post-votes">
+              <button class="vote-btn" onclick="ModPanel.votePost(${post.id}, true)" title="Upvote">
+                <i class="ti ti-arrow-up"></i>
+              </button>
+              <span class="vote-count">${post.upvoteCount - post.downvoteCount}</span>
+              <button class="vote-btn" onclick="ModPanel.votePost(${post.id}, false)" title="Downvote">
+                <i class="ti ti-arrow-down"></i>
+              </button>
+            </div>
+
+            <div class="post-content" style="flex: 1;">
+              <div class="d-flex justify-between align-start gap-2">
+                <a href="/post.html?id=${post.id}" class="post-title" style="text-decoration: none; font-size: 0.9375rem;">
+                  ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 6px; font-size: 0.625rem;"><i class="ti ti-pinned"></i> Đã ghim</span>' : ''}
+                  ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted); margin-right: 4px;"></i>' : ''}
+                  ${post.title}
+                </a>
+              </div>
+              <div class="post-meta">
+                <div class="d-flex align-center gap-2">
+                  <div class="avatar avatar-sm">${(post.authorUsername || 'U').charAt(0).toUpperCase()}</div>
+                  <a href="/profile.html?username=${post.authorUsername}" style="color: inherit; text-decoration: none;">
+                    <span>${post.authorUsername}</span>
+                    ${post.authorRole && post.authorRole !== 'User' ? RoleGuard.renderRoleBadge(post.authorRole) : ''}
+                  </a>
+                </div>
+                <span class="post-meta-item"><i class="ti ti-clock"></i> ${time}</span>
+                <span class="post-meta-item"><i class="ti ti-eye"></i> ${post.viewCount}</span>
+                <span class="post-meta-item"><i class="ti ti-message"></i> ${post.commentCount}</span>
+                <a href="/category.html?slug=${post.categorySlug}" class="category-tag ${post.categorySlug}" style="text-decoration: none;">${post.categoryName}</a>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0;">
+              <button class="btn btn-ghost btn-sm ${post.isPinned ? 'upvoted' : ''}"
+                onclick="ModPanel.togglePin(${post.id}, ${!post.isPinned})"
+                title="${post.isPinned ? 'Bỏ ghim' : 'Ghim bài'}"
+                style="color: ${post.isPinned ? 'var(--accent)' : ''};">
+                <i class="ti ti-pinned"></i>
+              </button>
+              <button class="btn btn-ghost btn-sm ${post.isLocked ? 'upvoted' : ''}"
+                onclick="ModPanel.toggleLock(${post.id}, ${!post.isLocked})"
+                title="${post.isLocked ? 'Mở khóa' : 'Khóa bài'}"
+                style="color: ${post.isLocked ? 'var(--accent-orange)' : ''};">
+                <i class="ti ti-${post.isLocked ? 'lock' : 'lock-open'}"></i>
+              </button>
+              <a href="/post.html?id=${post.id}" class="btn btn-ghost btn-sm" title="Xem chi tiết">
+                <i class="ti ti-eye"></i>
+              </a>
+            </div>
+          </div>`;
+      },
+
+      renderPagination(result) {
+        const totalPages = Math.ceil(result.totalItems / result.pageSize);
+        const container = document.getElementById('postsPagination');
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+        let html = '';
+        const current = result.page;
+        if (current > 1) html += `<button class="pagination-btn" onclick="ModPanel.loadPosts(${current - 1})"><i class="ti ti-chevron-left"></i></button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= current - 1 && i <= current + 1)) {
+            html += `<button class="pagination-btn ${i === current ? 'active' : ''}" onclick="ModPanel.loadPosts(${i})">${i}</button>`;
+          } else if (i === current - 2 || i === current + 2) {
+            html += `<span style="color: var(--text-muted); padding: 0 4px;">...</span>`;
+          }
+        }
+        if (current < totalPages) html += `<button class="pagination-btn" onclick="ModPanel.loadPosts(${current + 1})"><i class="ti ti-chevron-right"></i></button>`;
+        container.innerHTML = html;
+      },
+
+      async togglePin(postId, isPinned) {
+        try {
+          const result = await API.posts.pin(postId, isPinned);
+          if (result.success) {
+            Toast.show(isPinned ? 'Đã ghim bài viết' : 'Đã bỏ ghim bài viết', 'success');
+            this.loadPosts(this.currentPage);
+          } else {
+            Toast.show(result.message || 'Không thể thực hiện', 'error');
+          }
+        } catch (e) {
+          Toast.show('Lỗi khi cập nhật bài viết', 'error');
+        }
+      },
+
+      async toggleLock(postId, isLocked) {
+        try {
+          const result = await API.posts.lock(postId, isLocked);
+          if (result.success) {
+            Toast.show(isLocked ? 'Đã khóa bài viết' : 'Đã mở khóa bài viết', 'success');
+            this.loadPosts(this.currentPage);
+          } else {
+            Toast.show(result.message || 'Không thể thực hiện', 'error');
+          }
+        } catch (e) {
+          Toast.show('Lỗi khi cập nhật bài viết', 'error');
+        }
+      },
+
+      async votePost(postId, isUpvote) {
+        if (!AuthManager.isAuthenticated()) { Toast.show('Vui lòng đăng nhập', 'warning'); return; }
+        try {
+          await API.posts.vote(postId, isUpvote);
+          this.loadPosts(this.currentPage);
+        } catch (e) {
+          Toast.show(e.message || 'Lỗi khi bình chọn', 'error');
+        }
+      },
+
+      formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        if (seconds < 60) return 'vài giây trước';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+        return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => ModPanel.init());
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+
+

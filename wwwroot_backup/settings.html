@@ -1,0 +1,582 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài đặt - CyberForum</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/notification-bell.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
+    </a>
+    <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
+      <i class="ti ti-arrow-left"></i> Quay lại
+    </a>
+    <div style="flex: 1;"></div>
+    <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+      <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+        <i class="ti ti-bell"></i>
+      </button>
+      <a href="/profile.html" class="btn btn-ghost btn-sm" style="display: flex; align-items: center;">
+        <span class="user-avatar avatar avatar-sm"></span>
+        <span class="user-name" style="margin-left: 6px;"></span>
+      </a>
+    </div>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 20px); padding-bottom: 40px;">
+    <div class="container" style="max-width: 800px;">
+
+      <!-- Header -->
+      <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 1.6rem; display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+          <i class="ti ti-settings" style="color: var(--accent);"></i>
+          Cài đặt
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+          Quản lý tài khoản, giao diện và tùy chọn cá nhân của bạn
+        </p>
+      </div>
+
+      <!-- Settings nav tabs -->
+      <div style="display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto;">
+        <button class="settings-tab active" data-tab="account" style="padding: 10px 16px; background: none; border: none; color: var(--accent); border-bottom: 2px solid var(--accent); font-size: 0.875rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+          <i class="ti ti-user-circle"></i> Tài khoản
+        </button>
+        <button class="settings-tab" data-tab="appearance" style="padding: 10px 16px; background: none; border: none; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 0.875rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+          <i class="ti ti-palette"></i> Giao diện
+        </button>
+        <button class="settings-tab" data-tab="notifications" style="padding: 10px 16px; background: none; border: none; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 0.875rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+          <i class="ti ti-bell"></i> Thông báo
+        </button>
+        <button class="settings-tab" data-tab="privacy" style="padding: 10px 16px; background: none; border: none; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 0.875rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+          <i class="ti ti-lock"></i> Bảo mật
+        </button>
+      </div>
+
+      <!-- Account tab -->
+      <div class="settings-tab-content" id="tab-account">
+        <div class="card" style="padding: 20px; margin-bottom: 16px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Thông tin cá nhân</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Thông tin này sẽ hiển thị công khai trên hồ sơ của bạn
+          </p>
+          <form id="profileForm" onsubmit="return saveProfile(event)">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+              <div id="currentAvatar" class="avatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; flex-shrink: 0;">
+                U
+              </div>
+              <div>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(event)">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('avatarInput').click()">
+                  <i class="ti ti-camera"></i> Đổi ảnh đại diện
+                </button>
+                <p style="color: var(--text-muted); font-size: 0.75rem; margin: 6px 0 0;">JPG, PNG tối đa 2MB</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tên hiển thị</label>
+              <input type="text" class="form-input" id="displayName" placeholder="Tên hiển thị">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea class="form-input" id="bio" rows="3" placeholder="Mô tả ngắn về bạn..." maxlength="500"></textarea>
+              <span class="form-hint"><span id="bioCount">0</span>/500 ký tự</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email liên hệ (không công khai)</label>
+              <input type="email" class="form-input" id="email" placeholder="email@example.com">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+              <i class="ti ti-check"></i> Lưu thay đổi
+            </button>
+          </form>
+        </div>
+
+        <div class="card" style="padding: 20px; margin-bottom: 16px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Tên đăng nhập</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 12px;">
+            Tên đăng nhập không thể thay đổi sau khi tạo tài khoản
+          </p>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--text-muted);">@</span>
+            <span id="usernameDisplay" style="font-weight: 600;">username</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 20px; border-color: var(--accent-red);">
+          <h3 style="font-size: 1rem; margin-bottom: 4px; color: var(--accent-red);">Vùng nguy hiểm</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Hành động này không thể hoàn tác
+          </p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="/change-password.html" class="btn btn-secondary">
+              <i class="ti ti-key"></i> Đổi mật khẩu
+            </a>
+            <button class="btn btn-ghost" onclick="exportData()" style="color: var(--accent-blue); border-color: var(--accent-blue);">
+              <i class="ti ti-download"></i> Xuất dữ liệu
+            </button>
+            <button class="btn btn-ghost" onclick="deleteAccount()" style="color: var(--accent-red); border-color: var(--accent-red);">
+              <i class="ti ti-trash"></i> Xóa tài khoản
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance tab -->
+      <div class="settings-tab-content" id="tab-appearance" style="display: none;">
+        <div class="card" style="padding: 20px; margin-bottom: 16px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Giao diện</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Tùy chỉnh giao diện sáng/tối theo sở thích
+          </p>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Chế độ tối</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Sử dụng theme tối (cyber)</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" id="darkModeToggle" style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--bg-surface2); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 3px; bottom: 2px; background: var(--accent); border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Theo hệ thống</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Tự động theo cài đặt hệ điều hành</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" id="systemThemeToggle" style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--bg-surface2); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 3px; bottom: 2px; background: var(--accent); border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0;">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Hiệu ứng chuyển động</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Bật/tắt animation trên toàn site</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" id="animationToggle" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--accent); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 26px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications tab -->
+      <div class="settings-tab-content" id="tab-notifications" style="display: none;">
+        <div class="card" style="padding: 20px; margin-bottom: 16px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Thông báo trình duyệt</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Cho phép gửi thông báo khi có hoạt động mới
+          </p>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Trạng thái quyền</div>
+              <div id="notifPermissionStatus" style="color: var(--text-muted); font-size: 0.8125rem;">Chưa xác định</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="requestNotifPermission()">Yêu cầu quyền</button>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Có bình luận mới</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Thông báo khi có người bình luận bài viết của bạn</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--accent); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 26px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Có vote mới</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Thông báo khi bài viết/bình luận được vote</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--accent); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 26px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0;">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Tin nhắn chat mới</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Thông báo khi có tin nhắn mới trong phòng chat</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--accent); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 26px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy tab -->
+      <div class="settings-tab-content" id="tab-privacy" style="display: none;">
+        <div class="card" style="padding: 20px; margin-bottom: 16px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Bảo mật</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Quản lý mật khẩu và phiên đăng nhập
+          </p>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Mật khẩu</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Cập nhật lần cuối: chưa rõ</div>
+            </div>
+            <a href="/change-password.html" class="btn btn-primary btn-sm">Đổi mật khẩu</a>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Xác thực 2 yếu tố (2FA)</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Tăng cường bảo mật tài khoản</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" disabled>Sắp ra mắt</button>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0;">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Phiên đăng nhập</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Xem lịch sử đăng nhập gần đây</div>
+            </div>
+            <a href="/security-logs.html" class="btn btn-ghost btn-sm">Xem nhật ký</a>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 20px;">
+          <h3 style="font-size: 1rem; margin-bottom: 4px;">Quyền riêng tư</h3>
+          <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 16px;">
+            Kiểm soát ai có thể xem thông tin của bạn
+          </p>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Hiển thị email</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Cho người khác xem email của bạn</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--bg-surface2); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 3px; bottom: 2px; background: var(--text-muted); border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0;">
+            <div>
+              <div style="font-weight: 500; font-size: 0.9rem;">Cho phép nhắn tin</div>
+              <div style="color: var(--text-muted); font-size: 0.8125rem;">Người lạ có thể gửi tin nhắn cho bạn</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+              <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; inset: 0; background: var(--accent); border-radius: 26px; transition: 0.3s; border: 1px solid var(--border);"></span>
+              <span style="position: absolute; cursor: pointer; height: 20px; width: 20px; left: 26px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s;"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/role-guard.js"></script>
+  <script src="/js/notification-bell.js"></script>
+  <script src="/js/message-bell.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="/js/theme-manager.js"></script>
+  <script src="/js/sidebar-toggle.js"></script>
+
+  <script>
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await AuthManager.restoreSession();
+      if (!AuthManager.requireAuth()) return;
+      currentUser = AuthManager.getUser();
+      AuthManager.updateUI();
+      if (typeof NotificationBell !== 'undefined' && AuthManager.isAuthenticated()) {
+        NotificationBell._initialized = false;
+        NotificationBell.init();
+      }
+      RoleGuard.applyVisibility();
+      setupTabs();
+      await loadProfile();
+      setupAppearanceSettings();
+      setupNotificationSettings();
+    });
+
+    function setupTabs() {
+      document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Deactivate all tabs
+          document.querySelectorAll('.settings-tab').forEach(t => {
+            t.classList.remove('active');
+            t.style.color = 'var(--text-muted)';
+            t.style.borderBottomColor = 'transparent';
+            t.setAttribute('aria-selected', 'false');
+          });
+          // Activate clicked tab
+          tab.classList.add('active');
+          tab.style.color = 'var(--accent)';
+          tab.style.borderBottomColor = 'var(--accent)';
+          tab.setAttribute('aria-selected', 'true');
+          // Hide all content panels then show target
+          document.querySelectorAll('.settings-tab-content').forEach(c => {
+            c.style.setProperty('display', 'none', 'important');
+          });
+          const target = document.getElementById(`tab-${tab.dataset.tab}`);
+          if (target) target.style.setProperty('display', 'block', 'important');
+        });
+      });
+    }
+
+
+    async function loadProfile() {
+      try {
+        const result = await API.users.getMe();
+        if (result.success && result.data) {
+          currentUser = result.data;
+          document.getElementById('displayName').value = result.data.displayName || result.data.DisplayName || '';
+          document.getElementById('bio').value = result.data.bio || result.data.Bio || '';
+          document.getElementById('email').value = result.data.email || result.data.Email || '';
+          document.getElementById('usernameDisplay').textContent = result.data.username || result.data.Username || 'username';
+          updateBioCount();
+          updateAvatar(result.data);
+        } else {
+          // Fallback: dùng user từ session
+          if (currentUser) {
+            document.getElementById('displayName').value = currentUser.displayName || currentUser.username || '';
+            document.getElementById('usernameDisplay').textContent = currentUser.username || '';
+            updateAvatar(currentUser);
+          }
+        }
+      } catch (e) {
+        console.error('loadProfile error:', e);
+        if (currentUser) {
+          document.getElementById('displayName').value = currentUser.displayName || currentUser.username || '';
+          document.getElementById('usernameDisplay').textContent = currentUser.username || '';
+          updateAvatar(currentUser);
+        }
+      }
+    }
+
+    function updateAvatar(user) {
+      const avatar = document.getElementById('currentAvatar');
+      if (user.avatarUrl || user.AvatarUrl) {
+        avatar.innerHTML = `<img src="${user.avatarUrl || user.AvatarUrl}" alt="avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+      } else {
+        const name = (user.displayName || user.DisplayName || user.username || user.Username || 'U');
+        avatar.textContent = name.charAt(0).toUpperCase();
+      }
+    }
+
+    function updateBioCount() {
+      const bio = document.getElementById('bio');
+      document.getElementById('bioCount').textContent = bio.value.length;
+    }
+
+    document.getElementById('bio')?.addEventListener('input', updateBioCount);
+
+    async function saveProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveProfileBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ti ti-loader"></i> Đang lưu...';
+      try {
+        const data = {
+          displayName: document.getElementById('displayName').value.trim(),
+          bio: document.getElementById('bio').value.trim(),
+          email: document.getElementById('email').value.trim()
+        };
+        const result = await API.users.updateProfile(data);
+        if (result.success) {
+          // Cập nhật user trong AuthManager
+          const updated = result.data || { ...currentUser, ...data };
+          AuthManager._user = updated;
+          sessionStorage.setItem('cf_user', JSON.stringify(updated));
+          AuthManager.updateUI();
+          Toast.show('Đã lưu thay đổi', 'success');
+        } else {
+          Toast.show(result.message || 'Lỗi khi lưu', 'error');
+        }
+      } catch (err) {
+        Toast.show(err.message || 'Lỗi kết nối', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function uploadAvatar(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        Toast.show('File quá lớn (tối đa 2MB)', 'warning');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        Toast.show('Đang tải lên...', 'info', 1500);
+        const result = await API.upload.file(formData);
+        if (result.success) {
+          const updateResult = await API.users.updateProfile({ avatarUrl: result.data.url });
+          if (updateResult.success) {
+            AuthManager._user = { ...currentUser, avatarUrl: result.data.url };
+            sessionStorage.setItem('cf_user', JSON.stringify(AuthManager._user));
+            updateAvatar(AuthManager._user);
+            AuthManager.updateUI();
+            Toast.show('Đã cập nhật ảnh đại diện', 'success');
+          }
+        } else {
+          Toast.show(result.message || 'Lỗi upload', 'error');
+        }
+      } catch (err) {
+        Toast.show(err.message || 'Lỗi upload', 'error');
+      }
+      e.target.value = '';
+    }
+
+    function setupAppearanceSettings() {
+      const darkToggle = document.getElementById('darkModeToggle');
+      const systemToggle = document.getElementById('systemThemeToggle');
+      const animToggle = document.getElementById('animationToggle');
+
+      // Khởi tạo từ ThemeManager
+      const currentTheme = typeof ThemeManager !== 'undefined' ? ThemeManager.getTheme() : 'dark';
+      updateToggleVisual(darkToggle, currentTheme === 'dark');
+      updateToggleVisual(systemToggle, !localStorage.getItem('cf_theme_user_set'));
+      updateToggleVisual(animToggle, localStorage.getItem('cf_animations') !== 'off');
+
+      darkToggle?.addEventListener('change', () => {
+        if (typeof ThemeManager !== 'undefined') {
+          const newTheme = darkToggle.checked ? 'dark' : 'light';
+          ThemeManager.apply(newTheme);
+          localStorage.setItem('cf_theme_user_set', '1');
+          systemToggle.checked = false;
+          updateToggleVisual(systemToggle, false);
+        }
+      });
+
+      systemToggle?.addEventListener('change', () => {
+        if (typeof ThemeManager !== 'undefined') {
+          if (systemToggle.checked) {
+            localStorage.removeItem('cf_theme_user_set');
+            const sysTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            ThemeManager.apply(sysTheme);
+            updateToggleVisual(darkToggle, sysTheme === 'dark');
+          }
+        }
+      });
+
+      animToggle?.addEventListener('change', () => {
+        if (animToggle.checked) {
+          document.documentElement.style.setProperty('--animation-enabled', '1');
+          localStorage.setItem('cf_animations', 'on');
+        } else {
+          document.documentElement.style.setProperty('--animation-enabled', '0');
+          localStorage.setItem('cf_animations', 'off');
+        }
+      });
+    }
+
+    function updateToggleVisual(input, isOn) {
+      if (!input) return;
+      input.checked = isOn;
+      const track = input.nextElementSibling;
+      const thumb = track?.nextElementSibling;
+      if (isOn) {
+        if (track) { track.style.background = 'var(--accent)'; }
+        if (thumb) { thumb.style.left = '26px'; thumb.style.background = '#fff'; }
+      } else {
+        if (track) { track.style.background = 'var(--bg-surface2)'; }
+        if (thumb) { thumb.style.left = '3px'; thumb.style.background = 'var(--text-muted)'; }
+      }
+    }
+
+    function setupNotificationSettings() {
+      const statusEl = document.getElementById('notifPermissionStatus');
+      if ('Notification' in window) {
+        const perm = Notification.permission;
+        const labels = { granted: 'Đã cấp quyền', denied: 'Đã từ chối', default: 'Chưa cấp quyền' };
+        statusEl.textContent = labels[perm] || 'Không hỗ trợ';
+        statusEl.style.color = perm === 'granted' ? 'var(--accent)' : (perm === 'denied' ? 'var(--accent-red)' : 'var(--text-muted)');
+      } else {
+        statusEl.textContent = 'Trình duyệt không hỗ trợ';
+      }
+    }
+
+    async function requestNotifPermission() {
+      if (!('Notification' in window)) {
+        Toast.show('Trình duyệt không hỗ trợ thông báo', 'error');
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      setupNotificationSettings();
+      if (perm === 'granted') Toast.show('Đã bật thông báo', 'success');
+    }
+
+    async function exportData() {
+      Toast.show('Đang chuẩn bị dữ liệu...', 'info');
+      try {
+        const result = await API.auth.exportData?.() || { success: false, message: 'API chưa hỗ trợ' };
+        if (result.success) {
+          const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `cyberforum-data-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          Toast.show('Đã tải xuống dữ liệu', 'success');
+        } else {
+          Toast.show(result.message || 'Tính năng đang phát triển', 'info');
+        }
+      } catch (e) {
+        Toast.show('Tính năng đang phát triển', 'info');
+      }
+    }
+
+    async function deleteAccount() {
+      if (!confirm('Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.')) return;
+      if (!confirm('XÁC NHẬN LẦN CUỐI: Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.')) return;
+      try {
+        const result = await API.auth.deleteAccount?.();
+        if (result?.success) {
+          Toast.show('Đã xóa tài khoản', 'success');
+          AuthManager.logout();
+        } else {
+          Toast.show('Tính năng xóa tài khoản đang phát triển. Vui lòng liên hệ admin.', 'info');
+        }
+      } catch (e) {
+        Toast.show('Tính năng đang phát triển', 'info');
+      }
+    }
+  </script>
+</body>
+</html>
+

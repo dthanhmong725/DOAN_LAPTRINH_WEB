@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài đã lưu - CyberForum</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/themes/cyber.css">
+  <link rel="stylesheet" href="/css/code-block.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="/css/notification-bell.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
+    </a>
+    <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
+      <i class="ti ti-arrow-left"></i> Quay lại
+    </a>
+    <div class="navbar-right" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+      <div class="auth-buttons" style="display: flex; gap: 8px;">
+        <a href="/login.html" class="btn btn-ghost btn-nav">Đăng nhập</a>
+        <a href="/register.html" class="btn btn-primary btn-nav">Đăng ký</a>
+      </div>
+      <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+        <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+          <i class="ti ti-bell"></i>
+        </button>
+        <div style="position: relative;">
+          <button class="btn btn-ghost btn-user" id="userMenuBtn">
+            <div class="avatar avatar-sm user-avatar">U</div>
+            <span class="user-name">Người dùng</span>
+            <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
+          </button>
+          <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
+            <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-user"></i> Hồ sơ
+            </a>
+            <a href="/reputation.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-star"></i> Điểm uy tín
+            </a>
+            <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-bookmark"></i> Đã lưu
+            </a>
+            <a href="/change-password.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-settings"></i> Cài đặt
+            </a>
+            <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
+            <a href="javascript:void(0)" data-action="logout" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+              <i class="ti ti-logout"></i> Đăng xuất
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main style="padding-top: calc(var(--navbar-height) + 24px); padding-bottom: 40px;">
+    <div class="container" style="max-width: 860px;">
+
+      <div class="d-flex align-center justify-between mb-4" style="margin-bottom: 20px;">
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+          <i class="ti ti-bookmark" style="color: var(--accent);"></i>
+          Bài viết đã lưu
+        </h1>
+        <span id="bookmarkCount" class="badge" style="background: rgba(0,229,160,0.15); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8125rem;"></span>
+      </div>
+
+      <div id="loadingState">
+        <div class="skeleton" style="height: 120px; margin-bottom: 12px; border-radius: var(--radius-md);"></div>
+        <div class="skeleton" style="height: 120px; margin-bottom: 12px; border-radius: var(--radius-md);"></div>
+        <div class="skeleton" style="height: 120px; border-radius: var(--radius-md);"></div>
+      </div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <i class="ti ti-bookmark-off"></i>
+        <h3>Chưa có bài viết nào được lưu</h3>
+        <p>Lưu bài viết bạn quan tâm để đọc sau</p>
+        <a href="/" class="btn btn-primary mt-3">
+          <i class="ti ti-home"></i> Về trang chủ
+        </a>
+      </div>
+
+      <div id="notAuthState" class="empty-state" style="display: none;">
+        <i class="ti ti-lock"></i>
+        <h3>Yêu cầu đăng nhập</h3>
+        <p>Vui lòng đăng nhập để xem bài viết đã lưu</p>
+        <a href="/login.html" class="btn btn-primary mt-3">
+          <i class="ti ti-login"></i> Đăng nhập
+        </a>
+      </div>
+
+      <div id="bookmarksList"></div>
+
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/role-guard.js"></script>
+  <script src="/js/post-renderer.js"></script>
+  <script src="/js/bookmark.js"></script>
+  <script src="/js/notification-bell.js"></script>
+  <script src="/js/message-bell.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    let currentPage = 1;
+    const pageSize = 20;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await AuthManager.restoreSession();
+      AuthManager.updateUI();
+
+      // User menu dropdown
+      const userMenuBtn = document.getElementById('userMenuBtn');
+      const userDropdown = document.getElementById('userDropdown');
+      if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none'; });
+      }
+      document.addEventListener('click', () => { if (userDropdown) userDropdown.style.display = 'none'; });
+      document.querySelectorAll('[data-action="logout"]').forEach(btn => { btn.addEventListener('click', (e) => { e.preventDefault(); AuthManager.logout(); }); });
+
+      if (!AuthManager.isAuthenticated()) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('notAuthState').style.display = 'flex';
+        return;
+      }
+
+      await loadBookmarks(currentPage);
+      PostRenderer.renderAll();
+    });
+
+    async function loadBookmarks(page) {
+      const loadingEl = document.getElementById('loadingState');
+      const emptyEl = document.getElementById('emptyState');
+      const listEl = document.getElementById('bookmarksList');
+
+      if (page === 1) {
+        loadingEl.style.display = 'block';
+        emptyEl.style.display = 'none';
+        listEl.innerHTML = '';
+      }
+
+      try {
+        const result = await API.bookmarks.getAll({ page, pageSize });
+
+        if (page === 1) loadingEl.style.display = 'none';
+
+        if (!result.success || !result.data.length) {
+          if (page === 1) {
+            emptyEl.style.display = 'flex';
+          }
+          return;
+        }
+
+        const total = result.totalItems || 0;
+        document.getElementById('bookmarkCount').textContent = `${total} bài viết`;
+
+        listEl.innerHTML = result.data.map(bm => renderBookmarkCard(bm)).join('');
+        renderPagination(result);
+
+        // Sync bookmark states for loaded posts
+        const postIds = result.data.map(bm => bm.post.id);
+        BookmarkManager.syncStates(postIds);
+
+      } catch (error) {
+        console.error('Lỗi tải bài viết đã lưu:', error);
+        if (page === 1) {
+          loadingEl.style.display = 'none';
+          listEl.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><h3>Có lỗi xảy ra</h3><p>Không thể tải bài viết đã lưu</p></div>`;
+        }
+      }
+    }
+
+    function renderBookmarkCard(bm) {
+      const post = bm.post;
+      const savedAt = formatDate(bm.createdAt);
+      const score = post.upvoteCount - post.downvoteCount;
+      const scoreClass = score > 0 ? 'positive' : score < 0 ? 'negative' : '';
+      const initial = (post.authorUsername || 'U').charAt(0).toUpperCase();
+
+      return `
+        <article class="post-card" data-post-id="${post.id}" style="margin-bottom: 12px;">
+          <div class="post-votes">
+            <button class="vote-btn" onclick="votePost(${post.id}, true)" disabled>
+              <i class="ti ti-arrow-up"></i>
+            </button>
+            <span class="vote-count ${scoreClass}">${score}</span>
+            <button class="vote-btn" onclick="votePost(${post.id}, false)" disabled>
+              <i class="ti ti-arrow-down"></i>
+            </button>
+          </div>
+
+          <div class="post-content" style="flex: 1;">
+            <div class="d-flex justify-between align-start gap-2">
+              <a href="/post.html?id=${post.id}" class="post-title" style="text-decoration: none;">
+                ${post.isPinned ? '<span class="badge badge-success" style="margin-right: 6px; font-size: 0.625rem;"><i class="ti ti-pinned" style="font-size: 0.6875rem;"></i> Đã ghim</span>' : ''}
+                ${post.title}
+              </a>
+              ${post.isLocked ? '<i class="ti ti-lock" style="color: var(--text-muted); flex-shrink: 0;" title="Đã khóa"></i>' : ''}
+            </div>
+
+            <div class="post-meta" style="margin-top: 6px;">
+              <a href="/category.html?slug=${post.categorySlug}" class="category-tag ${post.categorySlug}">
+                ${post.categoryName}
+              </a>
+              <span class="text-muted" style="font-size: 0.75rem;">bởi</span>
+              <a href="/profile.html?username=${post.authorUsername}" style="color: var(--accent); font-size: 0.8125rem; text-decoration: none;">
+                ${post.authorUsername}
+              </a>
+              <span class="text-muted" style="font-size: 0.75rem;">•</span>
+              <span class="text-muted" style="font-size: 0.75rem;">${savedAt}</span>
+            </div>
+
+            <div class="d-flex gap-3 mt-2" style="font-size: 0.75rem; color: var(--text-muted);">
+              <span><i class="ti ti-eye"></i> ${post.viewCount}</span>
+              <span><i class="ti ti-message"></i> ${post.commentCount}</span>
+            </div>
+          </div>
+
+          <div class="d-flex align-start gap-1" style="flex-shrink: 0; padding-left: 12px;">
+            <button class="btn btn-ghost btn-sm bookmark-btn bookmarked"
+              onclick="BookmarkManager.toggle(${post.id}, this)"
+              title="Bỏ lưu bài viết" style="color: var(--accent);">
+              <i class="ti ti-bookmark-filled"></i>
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderPagination(result) {
+      const container = document.getElementById('pagination');
+      const totalPages = Math.ceil(result.totalItems / pageSize);
+      if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+      let html = '';
+      if (currentPage > 1) {
+        html += `<button class="pagination-btn" onclick="changePage(${currentPage - 1})"><i class="ti ti-chevron-left"></i></button>`;
+      }
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+          html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          html += `<span style="color: var(--text-muted);">…</span>`;
+        }
+      }
+      if (currentPage < totalPages) {
+        html += `<button class="pagination-btn" onclick="changePage(${currentPage + 1})"><i class="ti ti-chevron-right"></i></button>`;
+      }
+      container.innerHTML = html;
+    }
+
+    async function changePage(page) {
+      currentPage = page;
+      await loadBookmarks(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function votePost(postId, isUpvote) {
+      Toast.show('Không thể vote từ trang bài viết đã lưu', 'info');
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const seconds = Math.floor((now - date) / 1000);
+      if (seconds < 60) return 'vài giây trước';
+      if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+      return date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,858 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - CyberForum</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes/cyber.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/notification-bell.css">
+</head>
+<body style="background: var(--bg-primary); min-height: 100vh;">
+    <div class="page-wrapper">
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
+            </a>
+            <div style="flex: 1;"></div>
+            <a href="/" class="btn btn-ghost btn-sm">
+                <i class="ti ti-home"></i> Quay lại diễn đàn
+            </a>
+            <div class="user-menu" style="display: none; align-items: center; gap: 8px;">
+                <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+                    <i class="ti ti-bell"></i>
+                </button>
+                <a href="/profile.html" class="btn btn-ghost btn-sm" style="display: flex; align-items: center;">
+                    <span class="user-avatar avatar avatar-sm"></span>
+                    <span class="user-name" style="margin-left: 6px;"></span>
+                </a>
+            </div>
+            <a href="javascript:void(0)" data-action="logout" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; color: var(--accent-red); border: 1px solid var(--accent-red); border-radius: var(--radius-sm); padding: 6px 12px;">
+                <i class="ti ti-logout"></i>
+                <span style="margin-left: 4px;">Đăng xuất</span>
+            </a>
+        </nav>
+
+        <div class="main-content" style="margin-top: var(--navbar-height);">
+            <div class="container">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+                    <div>
+                        <h1 style="font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                            <i class="ti ti-settings" style="color: var(--accent);"></i>
+                            Bảng quản trị
+                        </h1>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-top: 4px;">
+                            Chào mừng, <strong id="adminName">Quản trị viên</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; margin-bottom: 20px; overflow: hidden;">
+                    <div style="display: flex; border-bottom: 1px solid var(--border); overflow-x: auto;">
+                        <button class="admin-tab active" data-tab="dashboard" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--accent);
+              border-bottom: 2px solid var(--accent); white-space: nowrap;">
+                            <i class="ti ti-chart-bar"></i> Thống kê
+                        </button>
+                        <button class="admin-tab" data-tab="users" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+              border-bottom: 2px solid transparent; white-space: nowrap;">
+                            <i class="ti ti-users"></i> Người dùng
+                        </button>
+                        <button class="admin-tab" data-tab="security" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+              border-bottom: 2px solid transparent; white-space: nowrap;">
+                            <i class="ti ti-shield-lock"></i> Nhật ký bảo mật
+                        </button>
+                        <button class="admin-tab" data-tab="permissions" style="
+              padding: 12px 20px; background: none; border: none; cursor: pointer;
+              font-size: 0.875rem; font-weight: 500; color: var(--text-muted);
+              border-bottom: 2px solid transparent; white-space: nowrap;">
+                            <i class="ti ti-lock"></i> Phân quyền
+                        </button>
+                    </div>
+
+                    <div id="tab-dashboard" class="admin-tab-content" style="padding: 20px;">
+                        <div id="statCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                            <div class="skeleton" style="height: 90px; border-radius: var(--radius-md);"></div>
+                            <div class="skeleton" style="height: 90px; border-radius: var(--radius-md);"></div>
+                            <div class="skeleton" style="height: 90px; border-radius: var(--radius-md);"></div>
+                            <div class="skeleton" style="height: 90px; border-radius: var(--radius-md);"></div>
+                        </div>
+
+                        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                                <h3 style="font-size: 0.9375rem; margin: 0;">Tăng trưởng 14 ngày gần nhất</h3>
+                                <div style="display: flex; gap: 14px; font-size: 0.75rem; color: var(--text-muted);">
+                                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fb950;margin-right:4px;"></span>Người dùng</span>
+                                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#388bfd;margin-right:4px;"></span>Bài viết</span>
+                                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d29922;margin-right:4px;"></span>Bình luận</span>
+                                </div>
+                            </div>
+                            <div style="position: relative; height: 260px;">
+                                <canvas id="growthChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px;">
+                            <div class="card" style="padding: 16px;">
+                                <h3 style="font-size: 0.9375rem; margin-bottom: 12px;">Phân bổ vai trò</h3>
+                                <div style="position: relative; height: 200px; display: flex; justify-content: center;">
+                                    <canvas id="roleChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding: 16px;">
+                                <h3 style="font-size: 0.9375rem; margin-bottom: 12px;">Top danh mục theo bài viết</h3>
+                                <div id="topCategoriesList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 16px; margin-top: 16px;">
+                            <h3 style="font-size: 0.9375rem; margin-bottom: 12px;">Top thành viên theo điểm uy tín</h3>
+                            <div id="topUsersList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-users" class="admin-tab-content" style="padding: 20px; display: none;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <input type="text" id="userSearch" class="form-input" placeholder="Tìm kiếm tên đăng nhập...">
+                            </div>
+                            <select id="roleFilter" class="form-select" style="width: auto; min-width: 140px;">
+                                <option value="">Tất cả vai trò</option>
+                                <option value="User">Người dùng</option>
+                                <option value="Moderator">Điều hành viên</option>
+                                <option value="Admin">Quản trị viên</option>
+                            </select>
+                            <select id="banFilter" class="form-select" style="width: auto; min-width: 140px;">
+                                <option value="">Tất cả</option>
+                                <option value="false">Đang hoạt động</option>
+                                <option value="true">Đã bị khóa</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" onclick="AdminPanel.loadUsers(1)">
+                                <i class="ti ti-search"></i> Tìm kiếm
+                            </button>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 700px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border);">
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Người dùng</th>
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Email</th>
+                                        <th style="text-align: center; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Vai trò</th>
+                                        <th style="text-align: center; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Điểm</th>
+                                        <th style="text-align: center; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Trạng thái</th>
+                                        <th style="text-align: center; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                                            <span class="loading-spinner" style="display: inline-block;"></span>
+                                            <p style="margin-top: 8px;">Đang tải...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="usersPagination" class="pagination" style="margin-top: 16px;"></div>
+                    </div>
+
+                    <div id="tab-security" class="admin-tab-content" style="padding: 20px; display: none;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <select id="logUserFilter" class="form-select" style="width: auto; min-width: 160px;">
+                                <option value="">Tất cả người dùng</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" onclick="AdminPanel.loadSecurityLogs(1)">
+                                <i class="ti ti-refresh"></i> Tải lại
+                            </button>
+                        </div>
+
+                        <div id="securityLogsContainer">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border);">
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Thời gian</th>
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Người dùng</th>
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Sự kiện</th>
+                                        <th style="text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">Chi tiết</th>
+                                        <th style="text-align: center; padding: 10px 12px; color: var(--text-muted); font-weight: 500;">IP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="securityLogsBody">
+                                    <tr>
+                                        <td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                                            <span class="loading-spinner" style="display: inline-block;"></span>
+                                            <p style="margin-top: 8px;">Đang tải nhật ký...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="securityPagination" class="pagination" style="margin-top: 16px;"></div>
+                    </div>
+
+                    <div id="tab-permissions" class="admin-tab-content" style="padding: 20px; display: none;">
+                        <h3 style="font-size: 1rem; margin-bottom: 16px;">Ma trận phân quyền</h3>
+                        <div id="permissionMatrix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Thay đổi vai trò</h3>
+                <button class="modal-close" onclick="AdminPanel.closeRoleModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-secondary); font-size: 0.875rem;">
+                    Đang thay đổi vai trò cho: <strong id="modalTargetUser"></strong>
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Vai trò mới</label>
+                    <select id="newRoleSelect" class="form-select">
+                        <option value="User">Người dùng</option>
+                        <option value="Moderator">Điều hành viên</option>
+                        <option value="Admin">Quản trị viên</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="AdminPanel.closeRoleModal()">Hủy</button>
+                <button class="btn btn-primary" id="confirmRoleBtn" onclick="AdminPanel.confirmRoleChange()">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="banModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Khóa tài khoản</h3>
+                <button class="modal-close" onclick="AdminPanel.closeBanModal()">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-secondary); font-size: 0.875rem;">
+                    Khóa tài khoản: <strong id="banTargetUser"></strong>
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Lý do khóa</label>
+                    <textarea id="banReasonInput" class="form-textarea" rows="3" placeholder="Nhập lý do khóa tài khoản..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="AdminPanel.closeBanModal()">Hủy</button>
+                <button class="btn btn-danger" id="confirmBanBtn" onclick="AdminPanel.confirmBan()">
+                    <i class="ti ti-ban"></i> Khóa tài khoản
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/role-guard.js"></script>
+    <script src="/js/notification-bell.js"></script>
+    <script src="/js/message-bell.js"></script>
+    <script src="/js/site.js"></script>
+
+    <script>
+        const AdminPanel = {
+            currentUserId: null,
+            currentRole: null,
+            currentBanUserId: null,
+            currentPage: 1,
+
+            async init() {
+                await AuthManager.restoreSession();
+
+                if (!AuthManager.isAdmin()) {
+                    Toast.show('Bạn không có quyền truy cập trang quản trị', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const user = AuthManager.getUser();
+                if (user) {
+                    document.getElementById('adminName').textContent = user.displayName || user.username;
+                }
+
+                AuthManager.updateUI();
+                this.setupTabs();
+                this.setupSearch();
+                this.loadDashboard();
+
+                // Gọi render matrix nếu hàm tồn tại trong RoleGuard
+                if (typeof RoleGuard !== 'undefined' && typeof RoleGuard.buildPermissionMatrix === 'function') {
+                    this.renderPermissionMatrix();
+                }
+                if (typeof RoleGuard !== 'undefined' && typeof RoleGuard.applyVisibility === 'function') {
+                    RoleGuard.applyVisibility();
+                }
+            },
+
+            setupTabs() {
+                document.querySelectorAll('.admin-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.admin-tab').forEach(t => {
+                            t.classList.remove('active');
+                            t.style.color = 'var(--text-muted)';
+                            t.style.borderBottomColor = 'transparent';
+                        });
+                        tab.classList.add('active');
+                        tab.style.color = 'var(--accent)';
+                        tab.style.borderBottomColor = 'var(--accent)';
+
+                        document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+                        document.getElementById(`tab-${tab.dataset.tab}`).style.display = 'block';
+
+                        if (tab.dataset.tab === 'security') {
+                            this.loadSecurityLogs(1);
+                        } else if (tab.dataset.tab === 'users') {
+                            this.loadUsers(1);
+                        } else if (tab.dataset.tab === 'dashboard') {
+                            this.loadDashboard();
+                        }
+                    });
+                });
+            },
+
+            setupSearch() {
+                const searchInput = document.getElementById('userSearch');
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.loadUsers(1);
+                });
+
+                document.getElementById('roleFilter').addEventListener('change', () => this.loadUsers(1));
+                document.getElementById('banFilter').addEventListener('change', () => this.loadUsers(1));
+            },
+
+            async loadUsers(page) {
+                this.currentPage = page;
+                const search = document.getElementById('userSearch').value.trim();
+                const role = document.getElementById('roleFilter').value;
+                const isBanned = document.getElementById('banFilter').value;
+
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">
+              <span class="loading-spinner" style="display: inline-block;"></span>
+              <p style="margin-top: 8px;">Đang tải dữ liệu...</p>
+            </td>
+          </tr>`;
+
+                try {
+                    // BỌC THÉP: Ép toàn bộ các biến về chuỗi rỗng ("") nếu không có giá trị
+                    // Tuyệt đối không để lọt chữ 'undefined' xuống api.js
+                    let banParam = "";
+                    if (isBanned === "true") banParam = true;
+                    if (isBanned === "false") banParam = false;
+
+                    const params = {
+                        page: page,
+                        pageSize: 15,
+                        search: search || "",
+                        role: role || "",
+                        isBanned: banParam
+                    };
+
+                    // Gọi API với params đã được làm sạch
+                    const result = await API.admin.getUsers(params);
+
+                    // Bọc lót dữ liệu an toàn (Hỗ trợ cả chuẩn C# chữ hoa và JS chữ thường)
+                    const isSuccess = result.success !== undefined ? result.success : (result.Success !== undefined ? result.Success : true);
+
+                    if (!isSuccess) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--accent-red);">${result.message || result.Message || 'Lỗi dữ liệu'}</td></tr>`;
+                        return;
+                    }
+
+                    const users = result.data || result.Data || [];
+                    if (users.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">Không tìm thấy người dùng nào thỏa mãn bộ lọc.</td></tr>`;
+                        document.getElementById('usersPagination').innerHTML = '';
+                        return;
+                    }
+
+                    // Hiển thị danh sách người dùng
+                    tbody.innerHTML = users.map(user => this.renderUserRow(user)).join('');
+
+                    // Hiển thị phân trang
+                    this.renderPagination({
+                        page: result.page || result.Page || 1,
+                        pageSize: result.pageSize || result.PageSize || 15,
+                        totalItems: result.totalItems || result.TotalItems || users.length
+                    });
+
+                } catch (e) {
+                    console.error("Chi tiết lỗi:", e);
+                    tbody.innerHTML = `<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--accent-red);">Lỗi kết nối máy chủ. Vui lòng xem Console (F12).</td></tr>`;
+                }
+            },
+
+            renderUserRow(user) {
+                // Trích xuất dữ liệu bọc lót chống lỗi Null
+                const id = user.id || user.Id;
+                const username = user.username || user.Username || '';
+                const displayName = user.displayName || user.DisplayName || username;
+                const email = user.email || user.Email || '—';
+                const role = user.role || user.Role || 'User';
+                const points = user.reputationPoints !== undefined ? user.reputationPoints : (user.ReputationPoints || 0);
+                const isBanned = user.isBanned !== undefined ? user.isBanned : (user.IsBanned || false);
+
+                const isAdmin = role === 'Admin';
+                const currentUser = AuthManager.getUser();
+                const isSelf = currentUser?.id === id;
+
+                const statusBadge = isBanned
+                    ? `<span class="badge bg-danger text-white" style="font-size: 0.75rem;"><i class="ti ti-ban"></i> Đã khóa</span>`
+                    : `<span class="badge bg-success text-white" style="font-size: 0.75rem;"><i class="ti ti-check"></i> Hoạt động</span>`;
+
+                const roleBadge = (typeof AuthManager !== 'undefined' && AuthManager.renderRoleBadge)
+                    ? AuthManager.renderRoleBadge(role)
+                    : `<span class="badge bg-secondary">${role}</span>`;
+
+                let actionBtns = [];
+
+                // KIỂM SOÁT QUYỀN: Ẩn nút thao tác nếu tài khoản là Admin hoặc là chính mình
+                if (isAdmin || isSelf) {
+                    actionBtns.push(`<span style="color: var(--text-muted); font-size: 0.8rem;"><i class="ti ti-shield-check"></i> Hệ thống</span>`);
+                } else {
+                    actionBtns.push(`
+                <button class="btn btn-sm btn-ghost" onclick="AdminPanel.openRoleModal(${id}, '${username}', '${role}')" title="Đổi vai trò">
+                  <i class="ti ti-user-cog" style="color: var(--accent-blue); font-size: 1.1rem;"></i>
+                </button>`);
+
+                    if (isBanned) {
+                        actionBtns.push(`
+                <button class="btn btn-sm btn-ghost" onclick="AdminPanel.unbanUser(${id})" title="Mở khóa">
+                  <i class="ti ti-user-check" style="color: var(--accent); font-size: 1.1rem;"></i>
+                </button>`);
+                    } else {
+                        actionBtns.push(`
+                <button class="btn btn-sm btn-ghost" onclick="AdminPanel.openBanModal(${id}, '${username}')" title="Khóa">
+                  <i class="ti ti-ban" style="color: var(--accent-red); font-size: 1.1rem;"></i>
+                </button>`);
+                    }
+                }
+
+                return `
+              <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s;" onmouseover="this.style.background='var(--bg-surface2)'" onmouseout="this.style.background=''">
+                <td style="padding: 12px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="avatar avatar-sm" style="background:var(--bg-surface2); color:var(--accent); font-weight:600;">${displayName.charAt(0).toUpperCase()}</span>
+                    <div>
+                      <div style="font-weight: 500; color: #fff;">${displayName}</div>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">@${username}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 12px; color: var(--text-secondary); font-size: 0.85rem;">${email}</td>
+                <td style="padding: 12px; text-align: center;">${roleBadge}</td>
+                <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--accent);">${points}</td>
+                <td style="padding: 12px; text-align: center;">${statusBadge}</td>
+                <td style="padding: 12px; text-align: center;">
+                  <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                    ${actionBtns.join('')}
+                  </div>
+                </td>
+              </tr>`;
+            },
+
+            renderPagination(result) {
+                const totalPages = Math.ceil(result.totalItems / result.pageSize);
+                if (totalPages <= 1) {
+                    document.getElementById('usersPagination').innerHTML = '';
+                    return;
+                }
+
+                const current = result.page;
+                let html = '';
+
+                if (current > 1) {
+                    html += `<button class="pagination-btn" onclick="AdminPanel.loadUsers(${current - 1})"><i class="ti ti-chevron-left"></i></button>`;
+                }
+
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= current - 1 && i <= current + 1)) {
+                        html += `<button class="pagination-btn ${i === current ? 'active' : ''}" onclick="AdminPanel.loadUsers(${i})">${i}</button>`;
+                    } else if (i === current - 2 || i === current + 2) {
+                        html += `<span style="color: var(--text-muted); padding: 0 4px;">...</span>`;
+                    }
+                }
+
+                if (current < totalPages) {
+                    html += `<button class="pagination-btn" onclick="AdminPanel.loadUsers(${current + 1})"><i class="ti ti-chevron-right"></i></button>`;
+                }
+
+                document.getElementById('usersPagination').innerHTML = html;
+            },
+
+            openRoleModal(userId, username, currentRole) {
+                this.currentUserId = userId;
+                document.getElementById('modalTargetUser').textContent = '@' + username;
+                document.getElementById('newRoleSelect').value = currentRole;
+                document.getElementById('roleModal').classList.add('active');
+            },
+
+            closeRoleModal() {
+                document.getElementById('roleModal').classList.remove('active');
+                this.currentUserId = null;
+            },
+
+            async confirmRoleChange() {
+                if (!this.currentUserId) return;
+                const newRole = document.getElementById('newRoleSelect').value;
+                const btn = document.getElementById('confirmRoleBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner" style="display: inline-block; width: 16px; height: 16px; border-width: 2px;"></span>';
+
+                try {
+                    const result = await API.admin.changeRole(this.currentUserId, newRole);
+                    if (result.success || result) {
+                        if (typeof Toast !== 'undefined') Toast.show('Đã thay đổi vai trò thành công', 'success');
+                        this.closeRoleModal();
+                        this.loadUsers(this.currentPage);
+                    } else {
+                        if (typeof Toast !== 'undefined') Toast.show(result.message || 'Không thể thay đổi vai trò', 'error');
+                    }
+                } catch (e) {
+                    if (typeof Toast !== 'undefined') Toast.show('Lỗi khi thay đổi vai trò', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Xác nhận';
+                }
+            },
+
+            openBanModal(userId, username) {
+                this.currentBanUserId = userId;
+                document.getElementById('banTargetUser').textContent = '@' + username;
+                document.getElementById('banReasonInput').value = '';
+                document.getElementById('banModal').classList.add('active');
+            },
+
+            closeBanModal() {
+                document.getElementById('banModal').classList.remove('active');
+                this.currentBanUserId = null;
+            },
+
+            async confirmBan() {
+                if (!this.currentBanUserId) return;
+                const reason = document.getElementById('banReasonInput').value.trim() || 'Vi phạm nội quy';
+                const btn = document.getElementById('confirmBanBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner" style="display: inline-block; width: 16px; height: 16px; border-width: 2px;"></span>';
+
+                try {
+                    const result = await API.admin.banUser(this.currentBanUserId, reason);
+                    if (result.success || result) {
+                        if (typeof Toast !== 'undefined') Toast.show('Đã khóa tài khoản thành công', 'success');
+                        this.closeBanModal();
+                        this.loadUsers(this.currentPage);
+                    } else {
+                        if (typeof Toast !== 'undefined') Toast.show(result.message || 'Không thể khóa tài khoản', 'error');
+                    }
+                } catch (e) {
+                    if (typeof Toast !== 'undefined') Toast.show('Lỗi khi khóa tài khoản', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ti ti-ban"></i> Khóa tài khoản';
+                }
+            },
+
+            async unbanUser(userId) {
+                if (!confirm('Mở khóa tài khoản này?')) return;
+                try {
+                    const result = await API.admin.unbanUser(userId);
+                    if (result.success || result) {
+                        if (typeof Toast !== 'undefined') Toast.show('Đã mở khóa tài khoản', 'success');
+                        this.loadUsers(this.currentPage);
+                    } else {
+                        if (typeof Toast !== 'undefined') Toast.show(result.message || 'Không thể mở khóa', 'error');
+                    }
+                } catch (e) {
+                    if (typeof Toast !== 'undefined') Toast.show('Lỗi khi mở khóa tài khoản', 'error');
+                }
+            },
+
+            async loadSecurityLogs(page) {
+                const tbody = document.getElementById('securityLogsBody');
+                tbody.innerHTML = `
+              <tr>
+                <td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                  <span class="loading-spinner" style="display: inline-block;"></span>
+                  <p style="margin-top: 8px;">Đang tải...</p>
+                </td>
+              </tr>`;
+
+                try {
+                    const result = await API.admin.getSecurityLogs({ page, pageSize: 50 });
+                    if (!result.success && !result.Success) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--accent-red);">${result.message || result.Message}</td></tr>`;
+                        return;
+                    }
+
+                    const logs = result.data || result.Data || [];
+                    if (logs.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">Chưa có nhật ký bảo mật nào.</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = logs.map(log => {
+                        const eventIcon = this.getEventIcon(log.action || log.Action);
+                        const isSuccess = log.isSuccess !== undefined ? log.isSuccess : log.IsSuccess;
+                        const eventColor = isSuccess ? 'var(--accent)' : 'var(--accent-red)';
+                        const time = new Date(log.createdAt || log.CreatedAt).toLocaleString('vi-VN');
+                        const username = log.username || log.Username || '<span style="color: var(--text-muted);">Hệ thống</span>';
+                        const action = log.action || log.Action || '';
+                        const details = log.description || log.Description || '';
+                        const ip = log.ipAddress || log.IpAddress || '';
+
+                        return `
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px 12px; font-size: 0.8125rem; color: var(--text-muted);">${time}</td>
+                    <td style="padding: 10px 12px; font-size: 0.8125rem;">${username}</td>
+                    <td style="padding: 10px 12px;">
+                      <span style="color: ${eventColor}; font-size: 0.8125rem;">
+                        ${eventIcon} ${action}
+                      </span>
+                    </td>
+                    <td style="padding: 10px 12px; font-size: 0.8125rem; color: var(--text-secondary);">${details}</td>
+                    <td style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted);">${ip}</td>
+                  </tr>`;
+                    }).join('');
+                } catch (e) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--accent-red);">Lỗi khi tải nhật ký.</td></tr>`;
+                }
+            },
+
+            getEventIcon(eventType) {
+                const typeStr = (eventType || '').toString().toUpperCase();
+                if (typeStr.includes('ROLE')) return '<i class="ti ti-user-cog" style="font-size: 0.875rem;"></i>';
+                if (typeStr.includes('BAN') || typeStr.includes('UNBAN')) return '<i class="ti ti-ban" style="font-size: 0.875rem;"></i>';
+                if (typeStr.includes('LOGIN')) return '<i class="ti ti-login" style="font-size: 0.875rem;"></i>';
+                if (typeStr.includes('LOGOUT')) return '<i class="ti ti-logout" style="font-size: 0.875rem;"></i>';
+                if (typeStr.includes('REGISTER')) return '<i class="ti ti-user-plus" style="font-size: 0.875rem;"></i>';
+                return '<i class="ti ti-shield" style="font-size: 0.875rem;"></i>';
+            },
+
+            renderPermissionMatrix() {
+                const container = document.getElementById('permissionMatrix');
+                if (typeof RoleGuard !== 'undefined' && typeof RoleGuard.buildPermissionMatrix === 'function') {
+                    container.innerHTML = RoleGuard.buildPermissionMatrix();
+                }
+            },
+
+            growthChartInstance: null,
+            roleChartInstance: null,
+
+            async loadDashboard() {
+                try {
+                    const result = await API.admin.getDashboard({ days: 14 });
+                    const isSuccess = result.success !== undefined ? result.success : result.Success;
+                    if (!isSuccess) {
+                        if (typeof Toast !== 'undefined') Toast.show(result.message || result.Message || 'Không thể tải thống kê', 'error');
+                        return;
+                    }
+                    const stats = result.data || result.Data;
+                    this.renderStatCards(stats);
+                    this.renderGrowthChart(stats);
+                    this.renderRoleChart(stats);
+                    this.renderTopCategories(stats.topCategories || stats.TopCategories);
+                    this.renderTopUsers(stats.topUsers || stats.TopUsers);
+                } catch (e) {
+                    if (typeof Toast !== 'undefined') Toast.show('Lỗi khi tải dữ liệu thống kê', 'error');
+                }
+            },
+
+            renderStatCards(stats) {
+                const totalUsers = stats.totalUsers ?? stats.TotalUsers ?? 0;
+                const newUsersToday = stats.newUsersToday ?? stats.NewUsersToday ?? 0;
+                const totalPosts = stats.totalPosts ?? stats.TotalPosts ?? 0;
+                const newPostsToday = stats.newPostsToday ?? stats.NewPostsToday ?? 0;
+                const totalComments = stats.totalComments ?? stats.TotalComments ?? 0;
+                const newCommentsToday = stats.newCommentsToday ?? stats.NewCommentsToday ?? 0;
+                const bannedUsers = stats.bannedUsers ?? stats.BannedUsers ?? 0;
+
+                const cards = [
+                    { label: 'Tổng người dùng', value: totalUsers, sub: `+${newUsersToday} hôm nay`, icon: 'ti-users', color: '#3fb950' },
+                    { label: 'Tổng bài viết', value: totalPosts, sub: `+${newPostsToday} hôm nay`, icon: 'ti-article', color: '#388bfd' },
+                    { label: 'Tổng bình luận', value: totalComments, sub: `+${newCommentsToday} hôm nay`, icon: 'ti-message', color: '#d29922' },
+                    { label: 'Tài khoản bị khóa', value: bannedUsers, sub: `trên ${totalUsers} người dùng`, icon: 'ti-ban', color: '#f85149' }
+                ];
+
+                document.getElementById('statCards').innerHTML = cards.map(c => `
+              <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: ${c.color}1a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <i class="ti ${c.icon}" style="color: ${c.color}; font-size: 1.25rem;"></i>
+                </div>
+                <div>
+                  <div style="font-size: 1.375rem; font-weight: 700; line-height: 1.1;">${c.value.toLocaleString('vi-VN')}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">${c.label}</div>
+                  <div style="font-size: 0.6875rem; color: ${c.color};">${c.sub}</div>
+                </div>
+              </div>
+            `).join('');
+            },
+
+            renderGrowthChart(stats) {
+                const userGrowth = stats.userGrowth || stats.UserGrowth || [];
+                const postGrowth = stats.postGrowth || stats.PostGrowth || [];
+                const commentGrowth = stats.commentGrowth || stats.CommentGrowth || [];
+
+                const labels = userGrowth.map(d => {
+                    const dateStr = d.date || d.Date || '';
+                    const parts = dateStr.split('-');
+                    if (parts.length >= 3) return `${parts[2]}/${parts[1]}`;
+                    return dateStr;
+                });
+
+                const ctx = document.getElementById('growthChart');
+                if (this.growthChartInstance) this.growthChartInstance.destroy();
+
+                this.growthChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'Người dùng',
+                                data: userGrowth.map(d => d.count || d.Count || 0),
+                                borderColor: '#3fb950',
+                                backgroundColor: '#3fb95022',
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 2
+                            },
+                            {
+                                label: 'Bài viết',
+                                data: postGrowth.map(d => d.count || d.Count || 0),
+                                borderColor: '#388bfd',
+                                backgroundColor: '#388bfd22',
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 2
+                            },
+                            {
+                                label: 'Bình luận',
+                                data: commentGrowth.map(d => d.count || d.Count || 0),
+                                borderColor: '#d29922',
+                                backgroundColor: '#d2992222',
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#30363d33' } },
+                            y: { beginAtZero: true, ticks: { color: '#8b949e', font: { size: 11 }, precision: 0 }, grid: { color: '#30363d33' } }
+                        }
+                    }
+                });
+            },
+
+            renderRoleChart(stats) {
+                const regCount = stats.regularUserCount ?? stats.RegularUserCount ?? 0;
+                const modCount = stats.moderatorCount ?? stats.ModeratorCount ?? 0;
+                const admCount = stats.adminCount ?? stats.AdminCount ?? 0;
+
+                const ctx = document.getElementById('roleChart');
+                if (this.roleChartInstance) this.roleChartInstance.destroy();
+
+                this.roleChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Người dùng', 'Điều hành viên', 'Quản trị viên'],
+                        datasets: [{
+                            data: [regCount, modCount, admCount],
+                            backgroundColor: ['#388bfd', '#d29922', '#f85149'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 10 } }
+                        }
+                    }
+                });
+            },
+
+            renderTopCategories(categories) {
+                const container = document.getElementById('topCategoriesList');
+                if (!categories || !categories.length) {
+                    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.8125rem;">Chưa có dữ liệu.</p>`;
+                    return;
+                }
+
+                const max = Math.max(...categories.map(c => c.postCount || c.PostCount || 0), 1);
+                container.innerHTML = categories.map(c => {
+                    const name = c.name || c.Name || 'Khác';
+                    const count = c.postCount ?? c.PostCount ?? 0;
+                    const color = c.color || c.Color || 'var(--accent)';
+                    return `
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 4px;">
+                  <span>${name}</span>
+                  <span style="color: var(--text-muted);">${count} bài</span>
+                </div>
+                <div style="height: 6px; background: var(--bg-surface2); border-radius: 4px; overflow: hidden;">
+                  <div style="height: 100%; width: ${(count / max) * 100}%; background: ${color};"></div>
+                </div>
+              </div>
+            `}).join('');
+            },
+
+            renderTopUsers(users) {
+                const container = document.getElementById('topUsersList');
+                if (!users || !users.length) {
+                    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.8125rem;">Chưa có dữ liệu.</p>`;
+                    return;
+                }
+
+                container.innerHTML = users.map((u, i) => {
+                    const username = u.username || u.Username || '';
+                    const role = u.role || u.Role || 'User';
+                    const points = u.reputationPoints ?? u.ReputationPoints ?? 0;
+                    const badgeHtml = (typeof AuthManager !== 'undefined' && AuthManager.renderRoleBadge) ? AuthManager.renderRoleBadge(role) : '';
+                    return `
+              <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; ${i < users.length - 1 ? 'border-bottom: 1px solid var(--border);' : ''}">
+                <span style="width: 20px; text-align: center; font-size: 0.8125rem; color: var(--text-muted); font-weight: 600;">${i + 1}</span>
+                <span class="avatar avatar-sm">${username.charAt(0).toUpperCase()}</span>
+                <span style="flex: 1; font-size: 0.875rem;">@${username}</span>
+                ${badgeHtml}
+                <span style="font-weight: 600; color: var(--accent); font-size: 0.875rem;">${points} điểm</span>
+              </div>
+            `}).join('');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => AdminPanel.init());
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

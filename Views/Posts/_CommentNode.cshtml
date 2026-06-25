@@ -1,0 +1,107 @@
+@model CommentDto
+@{
+    var comment = Model;
+    var post = ViewData["Post"] as DOAN_LAPTRINHWEB.Models.DTOs.PostDto;
+    var isAuthenticated = (bool)(ViewData["IsAuthenticated"] ?? false);
+    var isAdminOrMod = (bool)(ViewData["IsAdminOrMod"] ?? false);
+    var currentUserId = (int)(ViewData["CurrentUserId"] ?? 0);
+    var isLocked = (bool)(ViewData["IsLocked"] ?? false);
+    var isCommentAuthor = comment.Author?.Id == currentUserId;
+    var authorName = comment.Author?.DisplayName ?? comment.Author?.Username ?? "Thành viên";
+    var rank = comment.Author?.Rank ?? "Newbie";
+}
+
+@if (comment == null || (comment as DOAN_LAPTRINHWEB.Models.DTOs.CommentDto) == null) { return; }
+
+<div class="card mb-3" id="comment-@comment.Id" style="padding:16px; margin-left:@(comment.ParentCommentId.HasValue ? "24px" : "0"); border-left:@(comment.ParentCommentId.HasValue ? "2px solid var(--border-accent)" : "none"); background:rgba(255,255,255,0.01);">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center gap-2">
+            <div style="width:26px; height:24px; background:var(--bg-surface2); border-radius:50%; text-align:center; line-height:24px; font-weight:bold; font-size:0.75rem; color:var(--accent);">
+                @authorName.Substring(0, 1).ToUpper()
+            </div>
+            <span style="font-weight:500; font-size:0.9rem; color:#fff;">@authorName</span>
+            <span class="rank-badge rank-@rank.ToLower()" style="transform:scale(0.85); font-size:0.65rem;">@rank</span>
+        </div>
+        <span class="text-muted" style="font-size:0.75rem;">@comment.CreatedAt.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("vi-VN"))</span>
+    </div>
+
+    <div style="color:#cbd5e1; font-size:0.915rem; line-height:1.6;">
+        @Html.Raw(comment.Content)
+    </div>
+
+    <div class="d-flex gap-3 mt-2 align-items-center" style="font-size:0.8rem; border-top:1px solid rgba(255,255,255,0.03); padding-top:8px;">
+        <form asp-controller="Posts" asp-action="VoteComment" method="post" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="postId" value="@post?.Id" />
+            <input type="hidden" name="commentId" value="@comment.Id" />
+            <input type="hidden" name="isUpvote" value="true" />
+            <button type="submit" class="btn btn-link btn-xs p-0 text-muted" style="text-decoration:none;">
+                <i class="ti ti-arrow-up"></i> @(comment.UpvoteCount)
+            </button>
+        </form>
+        <form asp-controller="Posts" asp-action="VoteComment" method="post" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="postId" value="@post?.Id" />
+            <input type="hidden" name="commentId" value="@comment.Id" />
+            <input type="hidden" name="isUpvote" value="false" />
+            <button type="submit" class="btn btn-link btn-xs p-0 text-muted" style="text-decoration:none;">
+                <i class="ti ti-arrow-down"></i> @(comment.DownvoteCount)
+            </button>
+        </form>
+
+        @if (isAuthenticated && !isLocked)
+        {
+            <form asp-controller="Posts" asp-action="AddComment" method="get" style="display:inline;">
+                <button type="button" class="btn btn-link btn-xs p-0 text-muted" style="text-decoration:none;" onclick="document.getElementById('reply-content-@comment.Id').style.display='block'; this.style.display='none';">
+                    <i class="ti ti-reply"></i> Trả lời
+                </button>
+            </form>
+        }
+
+        @if ((isCommentAuthor || isAdminOrMod) && post != null)
+        {
+            <form asp-controller="Posts" asp-action="DeleteComment" method="post" style="display:inline; margin-left:auto;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="postId" value="@post.Id" />
+                <input type="hidden" name="commentId" value="@comment.Id" />
+                <button type="submit" class="btn btn-link btn-xs p-0 text-danger" onclick="return confirm('Xóa bình luận này?');" style="text-decoration:none;">
+                    <i class="ti ti-trash"></i> Xóa
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (isAuthenticated && !isLocked)
+    {
+        <div id="reply-content-@comment.Id" style="display:none; margin-top:12px;">
+            <form asp-controller="Posts" asp-action="AddComment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@post?.Id" />
+                <input type="hidden" name="parentCommentId" value="@comment.Id" />
+                <textarea name="content" class="form-textarea" rows="2" placeholder="Trả lời @authorName..." required style="min-height:60px; font-size:0.875rem;"></textarea>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('reply-content-@comment.Id').style.display='none'; document.querySelector('[data-reply-btn-@comment.Id]').style.display='inline';">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+                </div>
+            </form>
+        </div>
+    }
+
+    @if (comment.Replies != null && comment.Replies.Any())
+    {
+        <div class="mt-2">
+            @foreach (var reply in comment.Replies)
+            {
+                @await Html.PartialAsync("_CommentNode", new ViewDataDictionary(ViewData)
+                {
+                    { "Comment", reply },
+                    { "Post", post },
+                    { "IsAuthenticated", isAuthenticated },
+                    { "IsAdminOrMod", isAdminOrMod },
+                    { "CurrentUserId", currentUserId },
+                    { "IsLocked", isLocked }
+                })
+            }
+        </div>
+    }
+</div>

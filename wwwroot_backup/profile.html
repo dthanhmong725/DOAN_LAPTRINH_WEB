@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ - CyberForum</title>
+    <meta name="description" content="Xem và chỉnh sửa hồ sơ cá nhân, bài viết đã đăng và tài liệu upload trên CyberForum.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes/cyber.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <style>
+        /* KHUNG COVER */
+        .profile-cover {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 40%, #1a2332 100%);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+            .profile-cover img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .profile-cover:hover .cover-overlay {
+            background: rgba(0,0,0,0.45);
+        }
+
+        .cover-overlay-btn {
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .profile-cover:hover .cover-overlay-btn {
+            opacity: 1;
+        }
+
+        /* FIX LỖI AVATAR: Đưa vào cấu trúc Grid rõ ràng, không dùng absolute lung tung gây tuột hình */
+        .profile-card {
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .profile-layout-container {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 24px;
+            padding: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 576px) {
+            .profile-layout-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+                justify-items: center;
+            }
+        }
+
+        .avatar-container {
+            margin-top: -60px; /* Đẩy ngược avatar lên phần ảnh cover một cách an toàn */
+            position: relative;
+            z-index: 5;
+        }
+
+        .avatar-xl {
+            width: 110px;
+            height: 110px;
+            font-size: 2.5rem;
+            border: 4px solid var(--bg-surface-solid);
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--bg-surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+            .avatar-xl img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .avatar-edit-badge {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            font-size: 0.65rem;
+            text-align: center;
+            padding: 4px 0;
+            cursor: pointer;
+            border-radius: 0 0 50px 50px;
+        }
+
+        .stat-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 64px;
+        }
+
+            .stat-chip .stat-val {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: var(--accent);
+                line-height: 1;
+            }
+
+            .stat-chip .stat-lbl {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                margin-top: 2px;
+            }
+
+        .profile-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .profile-tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s;
+        }
+
+            .profile-tab-btn.active {
+                color: var(--accent);
+                border-bottom-color: var(--accent);
+            }
+
+        .profile-tab-content {
+            padding: 20px;
+            display: none;
+        }
+
+            .profile-tab-content.active {
+                display: block;
+            }
+    </style>
+    <link rel="stylesheet" href="/css/notification-bell.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/logo2-Photoroom.png" alt="CyberForum" style="height: 32px; width: auto;">
+        </a>
+        <a href="/" class="btn btn-ghost" style="margin-left: 12px;">
+            <i class="ti ti-arrow-left"></i> Quay lại
+        </a>
+        <div class="navbar-right" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+            <div class="auth-buttons" id="authButtons" style="display: flex; gap: 8px;">
+                <a href="/login.html" class="btn btn-ghost btn-nav">Đăng nhập</a>
+                <a href="/register.html" class="btn btn-primary btn-nav">Đăng ký</a>
+            </div>
+            <div class="user-menu" id="userMenu" style="display: none; align-items: center; gap: 8px;">
+                <button class="btn btn-ghost btn-icon" id="notificationBtn" title="Thông báo" style="position:relative;">
+                    <i class="ti ti-bell"></i>
+                </button>
+                <div style="position: relative;">
+                    <button class="btn btn-ghost btn-user" id="userMenuBtn">
+                        <div class="avatar avatar-sm user-avatar" id="navAvatar">U</div>
+                        <span class="user-name" id="navUsername">Người dùng</span>
+                        <i class="ti ti-chevron-down" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <div id="userDropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; min-width: 200px; z-index: 1000;">
+                        <a href="/profile.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-user"></i> Hồ sơ</a>
+                        <a href="/reputation.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-star"></i> Điểm uy tín</a>
+                        <a href="/upload.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-upload"></i> Upload tài liệu</a>
+                        <a href="/bookmarks.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-bookmark"></i> Đã lưu</a>
+                        <a href="/change-password.html" class="nav-item" style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;"><i class="ti ti-lock"></i> Đổi mật khẩu</a>
+                        <div style="height: 1px; background: var(--border); margin: 6px 0;"></div>
+                        <a href="javascript:void(0)" data-action="logout" style="padding: 8px 12px; color: var(--accent-red); display: flex; align-items: center; gap: 8px;"><i class="ti ti-logout"></i> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main style="padding-top: calc(var(--navbar-height) + 20px);">
+        <div class="container" style="max-width: 900px;">
+
+            <div class="profile-card">
+                <div class="profile-cover" id="coverArea">
+                    <div class="cover-overlay"></div>
+                </div>
+
+                <div class="profile-layout-container">
+                    <div class="avatar-container">
+                        <div class="avatar avatar-xl" id="profileAvatar"></div>
+                    </div>
+
+                    <div id="profileDetailsInfo" class="w-100">
+                        <div class="skeleton" style="height: 100px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden; background: var(--bg-surface-solid);">
+                <div class="profile-tabs">
+                    <button class="profile-tab-btn active" data-tab="posts"><i class="ti ti-article"></i> Bài viết</button>
+                    <button class="profile-tab-btn" data-tab="badges"><i class="ti ti-medal"></i> Huy hiệu</button>
+                    <button class="profile-tab-btn" data-tab="settings" id="tab-btn-settings" style="display:none;"><i class="ti ti-settings"></i> Chỉnh sửa</button>
+                </div>
+
+                <div id="tab-posts" class="profile-tab-content active"><div id="userPosts"></div></div>
+                <div id="tab-badges" class="profile-tab-content"><div id="userBadges" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;"></div></div>
+                <div id="tab-settings" class="profile-tab-content">
+                    <div style="max-width: 480px;">
+                        <form id="editProfileForm" style="display: flex; flex-direction: column; gap: 14px;">
+                            <div class="form-group"><label class="form-label">Tên hiển thị</label><input type="text" id="editDisplayName" class="form-input"></div>
+                            <div class="form-group"><label class="form-label">Giới thiệu</label><textarea id="editBio" class="form-input" rows="4"></textarea></div>
+                            <button type="submit" class="btn btn-primary" id="saveProfileBtn"><i class="ti ti-check"></i> Lưu thay đổi</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/toast.js"></script>
+    <script src="/js/notification-bell.js"></script>
+    <script src="/js/message-bell.js"></script>
+    <script src="/js/theme-manager.js"></script>
+    <script src="/js/sidebar-toggle.js"></script>
+    <script src="/js/site.js"></script>
+
+    <script>
+        const ProfilePage = {
+            username: null,
+            profileData: null,
+            isOwnProfile: false,
+
+            async init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                this.username = urlParams.get('username');
+
+                await AuthManager.restoreSession();
+                const currentUser = AuthManager.getUser();
+
+                if (!this.username) {
+                    if (currentUser) { window.location.href = `/profile.html?username=${currentUser.username}`; }
+                    else { window.location.href = '/login.html'; }
+                    return;
+                }
+
+                this.isOwnProfile = currentUser?.username === this.username;
+                this.updateNavbarUI();
+                await this.loadProfile();
+                await this.loadUserPosts();
+            },
+
+            updateNavbarUI() {
+                if (AuthManager.isAuthenticated()) {
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('userMenu').style.display = 'flex';
+                    document.getElementById('navUsername').textContent = AuthManager.getUser().displayName || AuthManager.getUser().username;
+                    document.getElementById('navAvatar').textContent = AuthManager.getUser().username.charAt(0).toUpperCase();
+
+                    const btn = document.getElementById('userMenuBtn');
+                    const dd = document.getElementById('userDropdown');
+                    if (btn) btn.onclick = (e) => { e.stopPropagation(); dd.style.display = dd.style.display === 'none' ? 'block' : 'none'; };
+                    document.onclick = () => { if (dd) dd.style.display = 'none'; };
+                    document.querySelectorAll('[data-action="logout"]').forEach(b => b.onclick = () => AuthManager.logout());
+                }
+            },
+
+            setupTabs() {
+                document.querySelectorAll('.profile-tab-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+                        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+                    };
+                });
+            },
+
+            async loadProfile() {
+                try {
+                    const result = await API.users.getProfile(this.username);
+                    if (!result.success) return;
+
+                    this.profileData = result.data;
+                    const user = result.data;
+                    document.title = `${user.displayName || user.username} - CyberForum`;
+
+                    // Render Avatar cố định
+                    const av = document.getElementById('profileAvatar');
+                    av.innerHTML = user.avatarUrl ? `<img src="${user.avatarUrl}">` : (user.displayName || user.username).charAt(0).toUpperCase();
+
+                    // FIX LỖI: Tách biệt nội dung HTML và gán sự kiện trực tiếp bằng JS, đảm bảo nút hoạt động 100%
+                    const infoArea = document.getElementById('profileDetailsInfo');
+                    infoArea.innerHTML = `
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div style="flex: 1; min-width: 250px;">
+                  <h1 style="font-size: 1.5rem; margin: 0; color:#fff;">
+                    ${user.displayName || user.username}
+                    <span class="rank-badge rank-${user.rank.toLowerCase()}">${user.rank}</span>
+                  </h1>
+                  <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">@${user.username}</div>
+                  <p style="color: #cbd5e1; font-size:0.9rem; margin-bottom: 12px;">${user.bio || 'Chuyên gia này chưa cập nhật tiểu sử.'}</p>
+
+                  <div class="d-flex gap-4 mt-2">
+                    <div class="stat-chip"><div class="stat-val">${user.reputationPoints}</div><div class="stat-lbl">Uy tín</div></div>
+                    <div class="stat-chip"><div class="stat-val">${user.postCount}</div><div class="stat-lbl">Bài viết</div></div>
+                  </div>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center" id="profileActionContainer">
+                  </div>
+              </div>
+            `;
+
+                    const actionContainer = document.getElementById('profileActionContainer');
+
+                    if (this.isOwnProfile) {
+                        document.getElementById('tab-btn-settings').style.display = 'block';
+                        document.getElementById('editDisplayName').value = user.displayName || '';
+                        document.getElementById('editBio').value = user.bio || '';
+
+                        const editBtn = document.createElement('button');
+                        editBtn.className = "btn btn-secondary btn-sm";
+                        editBtn.innerHTML = '<i class="ti ti-edit"></i> Sửa hồ sơ';
+                        editBtn.onclick = () => document.querySelector('[data-tab="settings"]').click();
+                        actionContainer.appendChild(editBtn);
+
+                        this.setupEditForm();
+                    } else {
+                        // Xây dựng nút Theo dõi
+                        const followBtn = document.createElement('button');
+                        followBtn.className = "btn btn-primary btn-sm follow-action-btn";
+                        followBtn.innerHTML = '<i class="ti ti-user-plus"></i> Theo dõi';
+                        followBtn.onclick = () => this.handleFollowClick(user.id);
+
+                        // Xây dựng nút Nhắn tin
+                        const chatBtn = document.createElement('button');
+                        chatBtn.className = "btn btn-secondary btn-sm";
+                        chatBtn.innerHTML = '<i class="ti ti-message"></i> Nhắn tin';
+                        chatBtn.onclick = () => this.handleChatClick(user.id);
+
+                        actionContainer.appendChild(followBtn);
+                        actionContainer.appendChild(chatBtn);
+
+                        // Lấy trạng thái từ Server cập nhật giao diện nút bấm tương ứng
+                        this.fetchFollowStatus(user.id);
+                    }
+
+                    this.setupTabs();
+                } catch (e) { console.error("Lỗi loadProfile:", e); }
+            },
+
+            async fetchFollowStatus(targetUserId) {
+                if (!AuthManager.isAuthenticated()) return;
+                try {
+                    const token = localStorage.getItem('token') || AuthManager.getToken(); // Lấy an toàn cả 2 nguồn
+                    const res = await fetch(`/api/users/${targetUserId}/follow-status`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json());
+
+                    const btn = document.querySelector('.follow-action-btn');
+                    if (btn && res.success) {
+                        if (res.isFollowing) {
+                            btn.className = "btn btn-danger btn-sm follow-action-btn";
+                            btn.innerHTML = '<i class="ti ti-user-minus"></i> Hủy theo dõi';
+                        } else {
+                            btn.className = "btn btn-primary btn-sm follow-action-btn";
+                            btn.innerHTML = '<i class="ti ti-user-plus"></i> Theo dõi';
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            },
+
+            async handleFollowClick(targetUserId) {
+                if (!AuthManager.isAuthenticated()) { window.location.href = '/login.html'; return; }
+                try {
+                    const token = localStorage.getItem('token') || AuthManager.getToken();
+                    const res = await fetch(`/api/users/${targetUserId}/follow`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(r => r.json());
+
+                    if (res.success) {
+                        Toast.show(res.message, 'success');
+                        this.fetchFollowStatus(targetUserId);
+                    } else {
+                        Toast.show(res.message || 'Thực hiện thất bại', 'error');
+                    }
+                } catch (e) { Toast.show('Lỗi kết nối API', 'error'); }
+            },
+
+            async handleChatClick(targetUserId) {
+                if (!AuthManager.isAuthenticated()) { window.location.href = '/login.html'; return; }
+                try {
+                    const res = await API.chat.initiateDirectChat(targetUserId);
+                    if (res.success) {
+                        Toast.show('Đang thiết lập kênh kết nối...', 'success');
+                        setTimeout(() => {
+                            window.location.href = `/chat.html?id=${res.chatId || res.data.id}`;
+                        }, 600);
+                    } else {
+                        Toast.show(res.message, 'error');
+                    }
+                } catch (e) {
+                    Toast.show(e.message || 'Hai người phải follow chéo nhau mới có thể chat!', 'error');
+                }
+            },
+
+            async loadUserPosts() {
+                const container = document.getElementById('userPosts');
+                try {
+                    const result = await API.posts.getAll({ page: 1, pageSize: 50 });
+                    const filtered = (result.data || []).filter(p => p.authorUsername === this.username);
+                    if (!filtered.length) {
+                        container.innerHTML = `<p class="text-muted small py-4 text-center">Chưa đăng tải bài viết nào.</p>`;
+                        return;
+                    }
+                    container.innerHTML = filtered.map(post => `
+              <article class="post-card" style="padding:15px; margin-bottom:10px;">
+                <div class="post-content">
+                  <a href="/post.html?id=${post.id}" class="post-title" style="font-size:1rem; font-weight:600;">${post.title}</a>
+                  <div class="post-meta mt-1" style="font-size:0.8rem;">
+                    <span>${post.createdAt}</span> • <span>${post.viewCount} xem</span>
+                  </div>
+                </div>
+              </article>
+            `).join('');
+                } catch (e) { container.innerHTML = '<p class="text-danger">Lỗi tải bài viết.</p>'; }
+            },
+
+            setupEditForm() {
+                document.getElementById('editProfileForm').onsubmit = async (e) => {
+                    e.preventDefault();
+                    try {
+                        const res = await API.users.updateProfile({
+                            displayName: document.getElementById('editDisplayName').value,
+                            bio: document.getElementById('editBio').value
+                        });
+                        if (res.success) { Toast.show('Cập nhật thành công', 'success'); window.location.reload(); }
+                    } catch (err) { Toast.show('Có lỗi xảy ra', 'error'); }
+                };
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => ProfilePage.init());
+    </script>
+</body>
+</html>
