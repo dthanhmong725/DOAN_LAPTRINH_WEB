@@ -133,18 +133,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof SiteUtils !== 'undefined') SiteUtils.init();
 
   if (typeof AuthManager !== 'undefined') {
+    AuthManager.restoreSession();
     AuthManager.updateUI();
   }
 
-  // Khởi tạo chuông thông báo & chuông tin nhắn trên MỌI trang có chứa nút #notificationBtn.
-  // Đặt tập trung ở đây để đồng bộ hành vi, tránh phải lặp lại ở từng trang riêng lẻ.
-  // NotificationBell/MessageBell tự bỏ qua nếu đã init hoặc chưa đăng nhập.
-  if (typeof AuthManager !== 'undefined' && AuthManager.isAuthenticated()) {
-    if (typeof NotificationBell !== 'undefined') {
-      NotificationBell.init();
+  // Đọc trạng thái auth từ server (Razor đã set trong data-server-auth).
+  // Dùng data attribute thay vì inline script để tránh bị CSP block.
+  const serverAuth = document.body.dataset.serverAuth === 'true';
+  const jsAuth = typeof AuthManager !== 'undefined' && AuthManager.isAuthenticated();
+  const isAuthed = serverAuth || jsAuth;
+
+  if (isAuthed) {
+    if (typeof NotificationBell !== 'undefined' && !NotificationBell._initialized) {
+      NotificationBell.init(true);
     }
-    if (typeof MessageBell !== 'undefined') {
-      MessageBell.init();
+    if (typeof MessageBell !== 'undefined' && !MessageBell._initialized) {
+      MessageBell.init(true);
     }
   }
 });

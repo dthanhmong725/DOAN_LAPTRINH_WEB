@@ -1,6 +1,5 @@
 // CyberForum - Message Bell Module
-// Hiển thị nút chuông tin nhắn (badge số chưa đọc) ngay cạnh nút Thông báo.
-// Bấm vào sẽ điều hướng thẳng tới /chat (không có dropdown xem trước).
+// Nút tin nhắn đã được đặt sẵn trong _Layout.cshtml, module này chỉ fetch badge count.
 class MessageBell {
   static _pollInterval = null;
   static _POLL_MS = 15000;
@@ -10,12 +9,11 @@ class MessageBell {
   // ============================================================
   // KHỞI TẠO & HỦY
   // ============================================================
-  static init() {
-    if (!AuthManager.isAuthenticated()) return;
+  static init(force = false) {
+    if (!force && !AuthManager.isAuthenticated()) return;
     if (this._initialized) return;
     this._initialized = true;
 
-    this._injectUI();
     this._fetchCount();
     this._pollInterval = setInterval(() => this._fetchCount(), this._POLL_MS);
   }
@@ -24,42 +22,15 @@ class MessageBell {
     if (this._pollInterval) { clearInterval(this._pollInterval); this._pollInterval = null; }
     this._initialized = false;
     this._unreadCount = 0;
-    const btn = document.getElementById('messageBellBtn');
-    if (btn) btn.remove();
-  }
-
-  // ============================================================
-  // INJECT UI (nút chuông + badge)
-  // ============================================================
-  static _injectUI() {
-    if (document.getElementById('messageBellBtn')) return;
-
-    // Tìm nút thông báo hiện có để chèn ngay cạnh (sau khi NotificationBell đã đổi id)
-    const notifBtn = document.getElementById('notifBellBtn') || document.getElementById('notificationBtn');
-    if (!notifBtn) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'messageBellBtn';
-    btn.className = notifBtn.className; // dùng chung style btn-ghost btn-icon với chuông thông báo
-    btn.title = 'Tin nhắn';
-    btn.style.position = 'relative';
-    btn.innerHTML = `
-      <i class="ti ti-mail"></i>
-      <span id="msgBadge" class="nb-badge"></span>
-    `;
-
-    btn.addEventListener('click', () => {
-      window.location.href = '/chat';
-    });
-
-    notifBtn.insertAdjacentElement('afterend', btn);
+    const badge = document.getElementById('msgBadge');
+    if (badge) badge.classList.remove('show');
   }
 
   // ============================================================
   // FETCH DỮ LIỆU
   // ============================================================
   static async _fetchCount() {
-    if (!AuthManager.isAuthenticated()) return;
+    // Không check auth ở đây vì đã được xác nhận từ server-side (Razor) hoặc AuthManager
     try {
       const result = await API.chat.getUnreadCount();
       const count = result?.unreadCount ?? result?.UnreadCount ?? 0;
@@ -70,7 +41,7 @@ class MessageBell {
   }
 
   // ============================================================
-  // RENDER UI
+  // RENDER BADGE
   // ============================================================
   static _renderBadge(count) {
     const oldCount = this._unreadCount;

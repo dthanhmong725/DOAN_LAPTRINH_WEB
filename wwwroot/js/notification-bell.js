@@ -11,8 +11,8 @@ class NotificationBell {
   // ============================================================
   // KHỞI TẠO & HỦY
   // ============================================================
-  static init() {
-    if (!AuthManager.isAuthenticated()) return;
+  static init(force = false) {
+    if (!force && !AuthManager.isAuthenticated()) return;
     if (this._initialized) return;
     this._initialized = true;
 
@@ -109,7 +109,7 @@ class NotificationBell {
   // FETCH DỮ LIỆU
   // ============================================================
   static async _fetchCount() {
-    if (!AuthManager.isAuthenticated()) return;
+    // Không check auth ở đây vì đã được xác nhận từ server-side (Razor) hoặc AuthManager
     try {
       const result = await API.notifications.getUnreadCount();
       const count = result?.data?.unreadCount ?? result?.Data?.unreadCount ?? result?.data?.UnreadCount ?? 0;

@@ -11,13 +11,13 @@
 
     @* Tabs *@
     <div style="display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:24px;">
-        <button class="settings-tab active" data-tab="profile" onclick="switchTab('profile')">
+        <button class="settings-tab active" data-tab="profile">
             <i class="ti ti-user"></i> Hồ sơ
         </button>
-        <button class="settings-tab" data-tab="security" onclick="switchTab('security')">
+        <button class="settings-tab" data-tab="security">
             <i class="ti ti-lock"></i> Bảo mật
         </button>
-        <button class="settings-tab" data-tab="appearance" onclick="switchTab('appearance')">
+        <button class="settings-tab" data-tab="appearance">
             <i class="ti ti-palette"></i> Giao diện
         </button>
     </div>
@@ -44,7 +44,7 @@
                 <label class="form-label">URL Ảnh bìa</label>
                 <input type="url" class="form-input" id="coverPhotoUrl" placeholder="https://...">
             </div>
-            <button class="btn btn-primary" onclick="saveProfile()">
+            <button class="btn btn-primary" id="btnSaveProfile">
                 <i class="ti ti-check"></i> Lưu thay đổi
             </button>
         </div>
@@ -80,14 +80,14 @@
             <div class="form-group">
                 <label class="form-label">Chủ đề màu sắc</label>
                 <div style="display:flex; gap:12px; flex-wrap:wrap;" id="themeOptions">
-                    <button class="theme-btn active" data-theme="cyber" onclick="setTheme('cyber')" style="padding:10px 20px; border-radius:var(--radius-md); background:var(--accent); color:#fff; border:none; cursor:pointer; font-size:0.875rem;">
+                    <button class="theme-btn active" data-theme="cyber" style="padding:10px 20px; border-radius:var(--radius-md); background:var(--accent); color:#fff; border:none; cursor:pointer; font-size:0.875rem;">
                         <i class="ti ti-cpu"></i> Cyber (Mặc định)
                     </button>
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Cỡ chữ</label>
-                <select class="form-select" id="fontSizeSelect" style="width:auto;" onchange="setFontSize(this.value)">
+                <select class="form-select" id="fontSizeSelect" style="width:auto;">
                     <option value="14">Nhỏ (14px)</option>
                     <option value="16" selected>Bình thường (16px)</option>
                     <option value="18">Lớn (18px)</option>
@@ -121,43 +121,8 @@
 
 @section Scripts {
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).style.display = 'block';
-            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const r = await API.users.getProfile('@Html.Raw(username)');
-                if (r.success) {
-                    const u = r.data;
-                    document.getElementById('displayName').value = u.displayName || '';
-                    document.getElementById('bio').value = u.bio || '';
-                    document.getElementById('avatarUrl').value = u.avatarUrl || '';
-                    document.getElementById('coverPhotoUrl').value = u.coverPhotoUrl || '';
-                }
-            } catch (e) { console.warn(e); }
-        });
-
-        async function saveProfile() {
-            const data = {
-                displayName: document.getElementById('displayName').value.trim() || null,
-                bio: document.getElementById('bio').value.trim() || null,
-                avatarUrl: document.getElementById('avatarUrl').value.trim() || null,
-                coverPhotoUrl: document.getElementById('coverPhotoUrl').value.trim() || null
-            };
-            try {
-                const r = await API.users.updateProfile(data);
-                if (r.success) Toast.show('Đã lưu thay đổi!', 'success');
-                else Toast.show(r.message || 'Không thể lưu', 'error');
-            } catch (e) { Toast.show(e.message || 'Có lỗi xảy ra', 'error'); }
-        }
-
-        function setFontSize(size) {
-            document.documentElement.style.fontSize = size + 'px';
-            localStorage.setItem('cf_font_size', size);
-        }
+        // Pass the username to the external script using a global variable
+        window.SETTINGS_USERNAME = '@Html.Raw(username)';
     </script>
+    <script src="/js/settings.js" asp-append-version="true"></script>
 }
