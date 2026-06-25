@@ -20,3 +20,44 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* --- ANIMATED BACKGROUND ORBS & CANVAS --- */
+#bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: -1;
+    pointer-events: none; /* Không cản trở click */
+}
+.ambient-orb {
+    position: fixed;
+    z-index: -2;
+    pointer-events: none;
+    border-radius: 50%;
+}
+.orb-1 {
+    top: -100px; left: -100px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(244,113,181,0.08), transparent 70%);
+    animation: float1 20s infinite alternate ease-in-out;
+}
+.orb-2 {
+    bottom: -150px; right: -100px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(45,212,191,0.06), transparent 70%);
+    animation: float2 25s infinite alternate ease-in-out;
+}
+.orb-3 {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(245,200,66,0.04), transparent 70%);
+    animation: pulse3 15s infinite alternate ease-in-out;
+}
+@keyframes float1 { 0% { transform: translate(0, 0); } 100% { transform: translate(40px, 40px); } }
+@keyframes float2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-40px, -40px); } }
+@keyframes pulse3 { 0% { transform: translate(-50%, -50%) scale(0.95); } 100% { transform: translate(-50%, -50%) scale(1.05); } }
+@media (prefers-reduced-motion: reduce) {
+    #bg-canvas { display: none !important; }
+    .ambient-orb { animation: none !important; }
+}

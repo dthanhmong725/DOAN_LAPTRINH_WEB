@@ -17,10 +17,15 @@
     <!-- Code highlight -->
     <link rel="stylesheet" href="/css/code-block.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-
+    <!-- ANIMATED BACKGROUND -->
+    <canvas id="bg-canvas"></canvas>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
     @* ─── NAVBAR ─────────────────────────────────────────────────────────── *@
     <nav class="navbar">
         <a href="/" class="logo">
