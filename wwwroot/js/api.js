@@ -27,7 +27,8 @@ class ApiClient {
         try {
             const response = await fetch(url, {
                 ...options,
-                headers
+                headers,
+                credentials: 'include'  // Gửi kèm cookie xác thực ASP.NET
             });
 
             let data;
@@ -48,7 +49,7 @@ class ApiClient {
                         const refreshed = await this._tryRefreshToken();
                         if (refreshed) {
                             headers['Authorization'] = `Bearer ${this.token}`;
-                            const retryResponse = await fetch(url, { ...options, headers });
+                            const retryResponse = await fetch(url, { ...options, headers, credentials: 'include' });
                             const retryData = await retryResponse.json();
                             if (!retryResponse.ok) throw new Error(retryData.message || 'Yêu cầu thất bại');
                             return retryData;
