@@ -49,9 +49,26 @@
 
         async function loadLeaderboard() {
             try {
-                const r = await API.users.getLeaderboard({ period: currentPeriod, pageSize: 20 });
-                if (r.success) { renderTop3(r.data.slice(0, 3)); renderTable(r.data); }
-            } catch (e) { console.error(e); }
+                // FIX 1: Gọi đúng endpoint /reputation/leaderboard (không phải /users/leaderboard)
+                const r = await API.reputation.getLeaderboard({ page: 1, pageSize: 20 });
+
+                // FIX 2: Backend trả PaginatedResponse, data là array LeaderboardEntryDto
+                // Mỗi entry có: { rank, reputationPoints, postCount, commentCount, user: { username, displayName, rank, ... } }
+                if (r.success && r.data && r.data.length > 0) {
+                    renderTop3(r.data.slice(0, 3));
+                    renderTable(r.data);
+                } else {
+                    showEmpty();
+                }
+            } catch (e) {
+                console.error('Leaderboard error:', e);
+                showEmpty();
+            }
+        }
+
+        function showEmpty() {
+            document.getElementById('top3').innerHTML = '<div></div><div style="text-align:center; padding:20px; color:var(--text-muted);">Chưa có dữ liệu</div><div></div>';
+            document.getElementById('leaderboardBody').innerHTML = '<tr><td colspan="5" style="padding:32px; text-align:center; color:var(--text-muted);">Chưa có thành viên nào trong bảng xếp hạng</td></tr>';
         }
 
         function setPeriod(period, btn) {
@@ -61,45 +78,55 @@
             loadLeaderboard();
         }
 
-        function renderTop3(users) {
+        function renderTop3(entries) {
             const c = document.getElementById('top3');
-            const order = [users[1], users[0], users[2]]; // 2nd, 1st, 3rd
+            // FIX 3: Sắp xếp vị trí podium: 2nd, 1st, 3rd
+            const order = [entries[1], entries[0], entries[2]];
             const medals = ['🥈', '🥇', '🥉'];
             const heights = ['160px', '200px', '160px'];
             const colors = ['#94a3b8', '#f59e0b', '#cd7c3f'];
 
-            c.innerHTML = order.map((u, i) => {
-                if (!u) return '<div></div>';
-                const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
+            c.innerHTML = order.map((entry, i) => {
+                if (!entry) return '<div></div>';
+                // FIX 4: Truy cập đúng cấu trúc entry.user thay vì trực tiếp entry
+                const u = entry.user;
+                const displayName = u.displayName || u.username;
+                const rankLabel = u.rank || 'Member';
                 return `<div class="card" style="padding:20px; text-align:center; border:1px solid ${colors[i]}44; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:${heights[i]}; position:relative;">
                     <div style="font-size:2rem; margin-bottom:8px;">${medals[i]}</div>
                     <div style="width:48px; height:48px; border-radius:50%; background:${colors[i]}22; border:2px solid ${colors[i]}; display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:bold; color:${colors[i]}; margin-bottom:8px;">
-                        ${(u.displayName||u.username).charAt(0).toUpperCase()}
+                        ${displayName.charAt(0).toUpperCase()}
                     </div>
-                    <a href="/users/profile?username=${u.username}" style="font-weight:600; color:var(--text-primary); text-decoration:none; margin-bottom:4px;">${u.displayName||u.username}</a>
-                    <span class="rank-badge rank-${u.rank.toLowerCase()}" style="font-size:0.7rem; margin-bottom:8px;">${u.rank}</span>
-                    <div style="font-size:0.875rem; color:var(--accent); font-weight:700;">${u.reputationPoints.toLocaleString('vi-VN')} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">uy tín</span></div>
+                    <a href="/users/profile?username=${u.username}" style="font-weight:600; color:var(--text-primary); text-decoration:none; margin-bottom:4px;">${displayName}</a>
+                    <span class="rank-badge rank-${rankLabel.toLowerCase()}" style="font-size:0.7rem; margin-bottom:8px;">${rankLabel}</span>
+                    <div style="font-size:0.875rem; color:var(--accent); font-weight:700;">${entry.reputationPoints.toLocaleString('vi-VN')} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">uy tín</span></div>
                 </div>`;
             }).join('');
         }
 
-        function renderTable(users) {
-            document.getElementById('leaderboardBody').innerHTML = users.map((u, i) => `
+        function renderTable(entries) {
+            document.getElementById('leaderboardBody').innerHTML = entries.map((entry, i) => {
+                // FIX 5: Truy cập đúng cấu trúc nested entry.user
+                const u = entry.user;
+                const displayName = u.displayName || u.username;
+                const rankLabel = u.rank || 'Member';
+                return `
                 <tr style="border-bottom:1px solid var(--border); transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
-                    <td style="padding:12px 16px; font-weight:600; color:${i<3?'var(--accent)':'var(--text-muted)'}; width:48px;">${i+1}</td>
+                    <td style="padding:12px 16px; font-weight:600; color:${i<3?'var(--accent)':'var(--text-muted)'}; width:48px;">${entry.rank}</td>
                     <td style="padding:12px 16px;">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:36px; height:36px; border-radius:50%; background:var(--accent)22; display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); font-size:0.9rem; flex-shrink:0;">${(u.displayName||u.username).charAt(0).toUpperCase()}</div>
+                            <div style="width:36px; height:36px; border-radius:50%; background:var(--accent)22; display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); font-size:0.9rem; flex-shrink:0;">${displayName.charAt(0).toUpperCase()}</div>
                             <div>
-                                <a href="/users/profile?username=${u.username}" style="color:var(--text-primary); text-decoration:none; font-weight:500;">${u.displayName||u.username}</a>
+                                <a href="/users/profile?username=${u.username}" style="color:var(--text-primary); text-decoration:none; font-weight:500;">${displayName}</a>
                                 <div style="font-size:0.75rem; color:var(--text-muted);">@@${u.username}</div>
                             </div>
                         </div>
                     </td>
-                    <td style="padding:12px 16px; text-align:right; font-weight:600; color:var(--accent);">${u.reputationPoints.toLocaleString('vi-VN')}</td>
-                    <td style="padding:12px 16px; text-align:right; color:var(--text-secondary);">${u.postCount||0}</td>
-                    <td style="padding:12px 16px; text-align:right;"><span class="rank-badge rank-${u.rank.toLowerCase()}" style="font-size:0.75rem;">${u.rank}</span></td>
-                </tr>`).join('');
+                    <td style="padding:12px 16px; text-align:right; font-weight:600; color:var(--accent);">${entry.reputationPoints.toLocaleString('vi-VN')}</td>
+                    <td style="padding:12px 16px; text-align:right; color:var(--text-secondary);">${entry.postCount || 0}</td>
+                    <td style="padding:12px 16px; text-align:right;"><span class="rank-badge rank-${rankLabel.toLowerCase()}" style="font-size:0.75rem;">${rankLabel}</span></td>
+                </tr>`;
+            }).join('');
         }
     </script>
 }
